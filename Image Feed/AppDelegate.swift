@@ -1,9 +1,3 @@
-//
-//  AppDelegate.swift
-//  Image Feed
-//
-//  Created by Владимир Брюковкин on 20.05.2025.
-//
 
 import UIKit
 
