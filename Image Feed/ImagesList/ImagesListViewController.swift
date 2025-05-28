@@ -4,7 +4,10 @@ final class ImagesListViewController: UIViewController {
 
     @IBOutlet private weak var tableView: UITableView!
     private let photoNames = (0..<20).map(String.init)
-    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent 
+        
+    }
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
