@@ -4,10 +4,6 @@ final class ImagesListViewController: UIViewController {
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
     @IBOutlet private weak var tableView: UITableView!
     private let photoNames = (0..<20).map(String.init)
-    override var preferredStatusBarStyle: UIStatusBarStyle {
-        return .lightContent 
-        
-    }
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
@@ -31,8 +27,7 @@ final class ImagesListViewController: UIViewController {
             }
             
             let image = UIImage(named: photoNames[indexPath.row])
-            _ = viewController.view // CRASH FIXED !?
-            viewController.imageView.image = image
+            viewController.image = image
         } else {
             super.prepare(for: segue, sender: sender)
         }
