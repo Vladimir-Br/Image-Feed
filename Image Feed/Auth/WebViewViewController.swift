@@ -15,6 +15,7 @@ class WebViewViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        webView.navigationDelegate = self
         loadAuthView()
     }
     
@@ -36,5 +37,34 @@ class WebViewViewController: UIViewController {
 
         let request = URLRequest(url: url)
         webView.load(request)
+    }
+    
+    private func code(from navigationAction: WKNavigationAction) -> String? {
+        if
+            let url = navigationAction.request.url,                         //1
+            let urlComponents = URLComponents(string: url.absoluteString),  //2
+            urlComponents.path == "/oauth/authorize/native",                //3
+            let items = urlComponents.queryItems,                           //4
+            let codeItem = items.first(where: { $0.name == "code" })        //5
+        {
+            return codeItem.value                                           //6
+        } else {
+            return nil
+        }
+    }
+}
+
+extension WebViewViewController: WKNavigationDelegate {
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+         if let code = code(from: navigationAction) { //1
+             //TODO: process code                     //2                
+                decisionHandler(.cancel) //3
+            } else {
+                decisionHandler(.allow) //4
+            }
     }
 }
