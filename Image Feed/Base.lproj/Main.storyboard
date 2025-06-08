@@ -258,18 +258,26 @@
                                     <wkPreferences key="preferences"/>
                                 </wkWebViewConfiguration>
                             </wkWebView>
+                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kVI-bY-5LO">
+                                <rect key="frame" x="0.0" y="99" width="393" height="4"/>
+                                <color key="progressTintColor" name="YP Black"/>
+                            </progressView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="rdl-xv-n0e"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="kVI-bY-5LO" firstAttribute="bottom" secondItem="rdl-xv-n0e" secondAttribute="top" id="9HQ-d7-m6u"/>
                             <constraint firstItem="geb-MZ-nnW" firstAttribute="bottom" secondItem="iwf-cw-Qc7" secondAttribute="bottom" id="C8g-ab-u4K"/>
                             <constraint firstItem="geb-MZ-nnW" firstAttribute="leading" secondItem="iwf-cw-Qc7" secondAttribute="leading" id="jO5-8u-AAE"/>
+                            <constraint firstItem="kVI-bY-5LO" firstAttribute="leading" secondItem="rdl-xv-n0e" secondAttribute="leading" id="m0k-JA-G3U"/>
+                            <constraint firstItem="kVI-bY-5LO" firstAttribute="trailing" secondItem="rdl-xv-n0e" secondAttribute="trailing" id="u4V-gK-EWB"/>
                             <constraint firstItem="geb-MZ-nnW" firstAttribute="trailing" secondItem="iwf-cw-Qc7" secondAttribute="trailing" id="vCS-Dd-KiU"/>
                             <constraint firstItem="geb-MZ-nnW" firstAttribute="top" secondItem="rdl-xv-n0e" secondAttribute="top" id="wKV-Sv-u6z"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="L7Y-AR-HkG"/>
                     <connections>
+                        <outlet property="progressView" destination="kVI-bY-5LO" id="iUo-K4-H0B"/>
                         <outlet property="webView" destination="geb-MZ-nnW" id="EyU-EI-BQk"/>
                     </connections>
                 </viewController>
@@ -299,7 +307,7 @@
             </objects>
             <point key="canvasLocation" x="-2779" y="-420"/>
         </scene>
-        <!--Navigation Controller-->
+        <!--Web View Navigation Controller-->
         <scene sceneID="OwI-P1-QFz">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="6cn-vL-gp9" customClass="WebViewNavigationController" customModule="Image_Feed" customModuleProvider="target" sceneMemberID="viewController">
