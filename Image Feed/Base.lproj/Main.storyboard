@@ -302,7 +302,7 @@
         <!--Navigation Controller-->
         <scene sceneID="OwI-P1-QFz">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="6cn-vL-gp9" sceneMemberID="viewController">
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="6cn-vL-gp9" customClass="WebViewNavigationController" customModule="Image_Feed" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="xVZ-KL-7Gz">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>
