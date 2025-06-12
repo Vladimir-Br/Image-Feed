@@ -52,9 +52,23 @@ final class OAuth2Service {
                     let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
                     completion(.success(response.accessToken))
                 } catch {
+                    print("[OAuth2Service] JSON Decoding Error: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             case .failure(let error):
+                // Логирование сетевых ошибок
+                if let networkError = error as? NetworkError {
+                    switch networkError {
+                    case .httpStatusCode(let statusCode):
+                        print("[OAuth2Service] HTTP Error: \(statusCode)")
+                    case .urlRequestError(let urlError):
+                        print("[OAuth2Service] Network Error: \(urlError.localizedDescription)")
+                    case .urlSessionError:
+                        print("[OAuth2Service] URLSession Error")
+                    }
+                } else {
+                    print("[OAuth2Service] Unknown Error: \(error.localizedDescription)")
+                }
                 completion(.failure(error))
             }
         }

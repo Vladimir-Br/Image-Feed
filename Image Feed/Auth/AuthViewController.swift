@@ -32,7 +32,21 @@ final class AuthViewController: UIViewController {
 // MARK: - WebViewViewControllerDelegate
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        // TODO: Обработка кода авторизации
+        oauth2Service.fetchOAuthToken(code: code) { [weak self] result in
+            switch result {
+            case .success(let token):
+                OAuth2TokenStorage.shared.token = token
+                vc.dismiss(animated: true) {
+                    // TODO: Переход к основному экрану приложения
+                    print("Авторизация успешна! Токен сохранен.")
+                }
+            case .failure(let error):
+                vc.dismiss(animated: true) {
+                    // TODO: Показать алерт с ошибкой
+                    print("Ошибка авторизации: \(error)")
+                }
+            }
+        }
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {

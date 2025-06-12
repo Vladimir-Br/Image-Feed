@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="6cn-vL-gp9">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="I4s-Uv-Rtg">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
@@ -186,7 +186,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JqZ-9n-g8N" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="298.47328244274809" y="-1259.1549295774648"/>
+            <point key="canvasLocation" x="262" y="-863"/>
         </scene>
         <!--Auth View Controller-->
         <scene sceneID="Ffv-0Y-Odl">
@@ -221,7 +221,7 @@
                                     <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <segue destination="o11-qK-mgh" kind="show" id="JY1-WV-mjV"/>
+                                    <segue destination="o11-qK-mgh" kind="show" identifier="ShowWebView" id="PRf-po-asX"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -240,7 +240,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LLy-vN-RYN" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1281.679389312977" y="-1259.1549295774648"/>
+            <point key="canvasLocation" x="-605.3435114503817" y="-1658.4507042253522"/>
         </scene>
         <!--Web View View Controller-->
         <scene sceneID="IPI-Ys-g4g">
@@ -283,7 +283,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="NpB-fM-krs" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-533" y="-1301"/>
+            <point key="canvasLocation" x="254.19847328244273" y="-1658.4507042253522"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="Wt1-BT-2jb">
@@ -307,23 +307,23 @@
             </objects>
             <point key="canvasLocation" x="-2779" y="-420"/>
         </scene>
-        <!--Web View Navigation Controller-->
-        <scene sceneID="OwI-P1-QFz">
+        <!--Navigation Controller-->
+        <scene sceneID="mNk-9a-cXb">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="6cn-vL-gp9" customClass="WebViewNavigationController" customModule="Image_Feed" customModuleProvider="target" sceneMemberID="viewController">
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="I4s-Uv-Rtg" sceneMemberID="viewController">
                     <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="xVZ-KL-7Gz">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="Uft-b4-bXa">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
                     <connections>
-                        <segue destination="FjA-tB-ap5" kind="relationship" relationship="rootViewController" id="9wd-0Y-cHh"/>
+                        <segue destination="FjA-tB-ap5" kind="relationship" relationship="rootViewController" id="ni1-Hg-u13"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="4ne-a0-osC" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="RIN-jb-Cq0" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2208.3969465648852" y="-1259.1549295774648"/>
+            <point key="canvasLocation" x="-1532.06106870229" y="-1658.4507042253522"/>
         </scene>
     </scenes>
     <resources>
