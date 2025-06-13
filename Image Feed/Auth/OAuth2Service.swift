@@ -13,6 +13,7 @@ final class OAuth2Service {
     
     func makeOAuthTokenRequest(code: String) -> URLRequest? {
         guard var urlComponents = URLComponents(string: "https://unsplash.com/oauth/token") else {
+            print("[OAuth2Service] Failed to create URLComponents")
             return nil
         }
         
@@ -25,6 +26,7 @@ final class OAuth2Service {
         ]
         
         guard let url = urlComponents.url else {
+            print("[OAuth2Service] Failed to create URL from URLComponents")
             return nil
         }
         
@@ -34,11 +36,12 @@ final class OAuth2Service {
         return request
     }
     
-    func fetchOAuthToken(code: String, completion: @escaping (Result<String, Error>) -> Void) {
+    func fetchAuthToken(code: String, completion: @escaping (Result<String, Error>) -> Void) {
         currentTask?.cancel()
         currentTask = nil
         
         guard let request = makeOAuthTokenRequest(code: code) else {
+            print("[OAuth2Service] Failed to create URLRequest")
             completion(.failure(OAuth2Error.invalidRequest))
             return
         }
@@ -48,7 +51,6 @@ final class OAuth2Service {
             case .success(let data):
                 do {
                     let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
                     let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
                     completion(.success(response.accessToken))
                 } catch {
@@ -56,11 +58,11 @@ final class OAuth2Service {
                     completion(.failure(error))
                 }
             case .failure(let error):
-                // Логирование сетевых ошибок
+                // Детальное логирование всех типов ошибок
                 if let networkError = error as? NetworkError {
                     switch networkError {
                     case .httpStatusCode(let statusCode):
-                        print("[OAuth2Service] HTTP Error: \(statusCode)")
+                        print("[OAuth2Service] HTTP Error: Status code \(statusCode)")
                     case .urlRequestError(let urlError):
                         print("[OAuth2Service] Network Error: \(urlError.localizedDescription)")
                     case .urlSessionError:
@@ -78,4 +80,12 @@ final class OAuth2Service {
 
 struct OAuthTokenResponseBody: Decodable {
     let accessToken: String
+    let tokenType: String
+    let scope: String
+    
+    enum CodingKeys: String, CodingKey {
+        case accessToken = "access_token"
+        case tokenType = "token_type"
+        case scope
+    }
 }
