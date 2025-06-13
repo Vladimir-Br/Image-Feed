@@ -292,8 +292,17 @@
                     <view key="view" contentMode="scaleToFill" id="nR3-KK-jcc">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Vector" translatesAutoresizingMaskIntoConstraints="NO" id="1wM-JY-zsL">
+                                <rect key="frame" x="159" y="387" width="75" height="78"/>
+                            </imageView>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="raz-OW-0iZ"/>
                         <color key="backgroundColor" name="YP Black"/>
+                        <constraints>
+                            <constraint firstItem="1wM-JY-zsL" firstAttribute="centerY" secondItem="nR3-KK-jcc" secondAttribute="centerY" id="d04-bd-2yz"/>
+                            <constraint firstItem="1wM-JY-zsL" firstAttribute="centerX" secondItem="nR3-KK-jcc" secondAttribute="centerX" id="dld-0R-C3T"/>
+                        </constraints>
                     </view>
                     <connections>
                         <segue destination="I4s-Uv-Rtg" kind="presentation" identifier="ShowAuth" modalPresentationStyle="fullScreen" modalTransitionStyle="coverVertical" id="mrO-gd-yQI"/>
@@ -348,6 +357,7 @@
     <resources>
         <image name="0" width="1600" height="1059"/>
         <image name="Backward" width="24" height="24"/>
+        <image name="Vector" width="75" height="78"/>
         <image name="auth_screen_logo" width="60" height="60"/>
         <image name="button_like_yes" width="44" height="44"/>
         <image name="share_Button" width="51" height="50"/>

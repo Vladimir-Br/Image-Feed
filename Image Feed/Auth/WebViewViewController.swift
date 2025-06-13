@@ -92,21 +92,6 @@ final class WebViewViewController: UIViewController {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
-    
-    private func switchToTabBarController() {
-        // Получаем экземпляр window приложения
-        guard let window = UIApplication.shared.windows.first else {
-            assertionFailure("Invalid window configuration")
-            return
-        }
-        
-        // Создаём экземпляр TabBarController из Storyboard
-        let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-            .instantiateViewController(withIdentifier: "TabBarViewController")
-        
-        // Устанавливаем TabBarController как rootViewController
-        window.rootViewController = tabBarController
-    }
 }
 
 extension WebViewViewController: WKNavigationDelegate {

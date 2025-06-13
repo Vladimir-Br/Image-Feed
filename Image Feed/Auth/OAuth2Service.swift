@@ -36,7 +36,7 @@ final class OAuth2Service {
         return request
     }
     
-    func fetchAuthToken(code: String, completion: @escaping (Result<String, Error>) -> Void) {
+    func fetchOAuthToken(code: String, completion: @escaping (Result<String, Error>) -> Void) {
         currentTask?.cancel()
         currentTask = nil
         
@@ -58,7 +58,6 @@ final class OAuth2Service {
                     completion(.failure(error))
                 }
             case .failure(let error):
-                // Детальное логирование всех типов ошибок
                 if let networkError = error as? NetworkError {
                     switch networkError {
                     case .httpStatusCode(let statusCode):
