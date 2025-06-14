@@ -37,12 +37,13 @@ final class AuthViewController: UIViewController {
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
         oauth2Service.fetchOAuthToken(code: code) { [weak self] result in
+            guard let self = self else { return }
             switch result {
             case .success(let token):
                 OAuth2TokenStorage.shared.token = token
                 print("Authentication successful! Token saved.")
                 vc.dismiss(animated: true) {
-                    self?.delegate?.didAuthenticate(self!)
+                    self.delegate?.didAuthenticate(self)
                 }
             case .failure(let error):
                 print("Authentication error: \(error.localizedDescription)")
