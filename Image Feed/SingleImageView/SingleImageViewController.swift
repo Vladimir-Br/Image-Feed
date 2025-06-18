@@ -4,6 +4,10 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var scrollView: UIScrollView!
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     var image: UIImage? {
         didSet {
             guard isViewLoaded, let image else { return }
