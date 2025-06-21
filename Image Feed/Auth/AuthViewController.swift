@@ -10,6 +10,8 @@ final class AuthViewController: UIViewController {
     private let oauth2Service = OAuth2Service.shared
     weak var delegate: AuthViewControllerDelegate?
     
+    private var isAuthenticating = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         configureBackButton()
@@ -37,11 +39,11 @@ final class AuthViewController: UIViewController {
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        ProgressHUD.animate()
+        UIBlockingProgressHUD.show()
         oauth2Service.fetchOAuthToken(code) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
-                ProgressHUD.dismiss()
+                UIBlockingProgressHUD.dismiss()
                 switch result {
                 case .success(let token):
                     OAuth2TokenStorage.shared.token = token
@@ -58,7 +60,7 @@ extension AuthViewController: WebViewViewControllerDelegate {
         }
     }
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
-        ProgressHUD.dismiss()
+        UIBlockingProgressHUD.dismiss()
         vc.dismiss(animated: true)
     }
 }

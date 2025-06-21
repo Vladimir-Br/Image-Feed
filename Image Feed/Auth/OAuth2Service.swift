@@ -9,82 +9,83 @@ final class OAuth2Service {
     static let shared = OAuth2Service()
     private init() {}
     
-    // Выносим URLSession в свойство для лучшей структуры и тестируемости
-    private let urlSession = URLSession.shared
+    // MARK: - Private Properties
     
-    // Переменные для управления состоянием запросов
-    private var task: URLSessionTask?
-    private var lastCode: String?
+    private let decoder = JSONDecoder()
+    private let urlSession = URLSession.shared
+    private var currentTask: URLSessionTask?
+    private var currentCode: String?
+    
+    // MARK: - Public Methods
     
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
-        // Проверяем, что код выполняется в главном потоке
-        assert(Thread.isMainThread, "fetchOAuthToken must be called on main thread")
+        // 1. Убеждаемся, что начинаем из главного потока.
+        assert(Thread.isMainThread, "Этот метод должен вызываться из главного потока")
         
-        // Если уже выполняется запрос, и код в нем совпадает с текущим - это дубликат.
-        // Ничего не делаем, выходим.
-        if let lastCode = lastCode, lastCode == code, task != nil {
-            print("[OAuth2Service] Duplicate request with code \(code). Ignoring.")
+        // 2. Проверяем гонку условий: если уже есть активный запрос с таким же кодом, выходим.
+        if let currentCode = currentCode, currentCode == code, currentTask != nil {
+            print("[OAuth2Service] Обнаружен дублирующий запрос с кодом \(code). Игнорируем.")
             completion(.failure(AuthServiceError.duplicateRequest))
             return
         }
         
-        // Если есть активный запрос, но с другим кодом - он более не актуален.
-        // Отменяем его перед тем, как начать новый.
-        task?.cancel()
+        // 3. Если есть активный, но устаревший запрос (с другим кодом) — отменяем его.
+        currentTask?.cancel()
         
-        // Запоминаем код, с которым будем делать новый запрос.
-        lastCode = code
+        // 4. Запоминаем новый код, с которым будем работать.
+        self.currentCode = code
         
-        // Создаем запрос
+        // 5. Создаем запрос.
         guard let request = makeOAuthTokenRequest(code: code) else {
-            print("[OAuth2Service] Failed to create URLRequest")
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
         
-        // Создаем и запускаем задачу
+        // 6. Создаем сетевую задачу. URLSession сам выполнит ее в фоновом потоке.
         let task = urlSession.data(for: request) { [weak self] result in
-            guard let self = self else { return }
-            
-            // Обрабатываем результат в главном потоке
+            // 7. Получив результат (в фоновом потоке), переключаемся на главный поток для обработки.
             DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                // 8. Очищаем состояние.
+                self.currentTask = nil
+                self.currentCode = nil
+                
+                // 9. Обрабатываем результат.
                 switch result {
                 case .success(let data):
                     do {
-                        let decoder = JSONDecoder()
-                        let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
+                        let response = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
                         OAuth2TokenStorage.shared.token = response.accessToken
+                        print("[OAuth2Service] Успешно получен и сохранен токен.")
                         completion(.success(response.accessToken))
                     } catch {
-                        print("[OAuth2Service] JSON Decoding Error: \(error.localizedDescription)")
+                        print("[OAuth2Service] Ошибка декодирования: \(error.localizedDescription)")
                         completion(.failure(error))
                     }
                 case .failure(let error):
-                    // Игнорируем ошибку отмены задачи
                     if (error as NSError).code == NSURLErrorCancelled {
-                        print("[OAuth2Service] Request was cancelled.")
+                        print("[OAuth2Service] Запрос был отменен.")
                     } else {
-                        print("[OAuth2Service] Network Error: \(error.localizedDescription)")
+                        print("[OAuth2Service] Ошибка сети: \(error.localizedDescription)")
                         completion(.failure(error))
                     }
                 }
-                
-                // Очищаем состояние после завершения
-                self.task = nil
-                self.lastCode = nil
             }
         }
         
-        // Сохраняем ссылку на задачу и запускаем
-        self.task = task
+        // 10. Сохраняем ссылку на новую задачу и запускаем ее.
+        self.currentTask = task
         task.resume()
-        
-        print("[OAuth2Service] Started OAuth token request with code \(code)")
     }
     
+    // MARK: - Private Methods
+    
     private func makeOAuthTokenRequest(code: String) -> URLRequest? {
+        print("[OAuth2Service] Создаем URLRequest для кода \(code)")
+        
         guard var urlComponents = URLComponents(string: "https://unsplash.com/oauth/token") else {
-            print("[OAuth2Service] Failed to create URLComponents")
+            print("[OAuth2Service] Ошибка: не удалось создать URLComponents")
             return nil
         }
         
@@ -97,13 +98,15 @@ final class OAuth2Service {
         ]
         
         guard let url = urlComponents.url else {
-            print("[OAuth2Service] Failed to create URL from URLComponents")
+            print("[OAuth2Service] Ошибка: не удалось создать URL из URLComponents")
             return nil
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        print("[OAuth2Service] URLRequest успешно создан для URL: \(url)")
         return request
     }
 }
