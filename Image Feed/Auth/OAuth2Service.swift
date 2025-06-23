@@ -47,17 +47,17 @@ final class OAuth2Service {
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 
-                // 8. Очищаем состояние.
+                // 8. Очищаем состояние задачи сразу при получении любого результата.
                 self.currentTask = nil
-                self.currentCode = nil
                 
                 // 9. Обрабатываем результат.
                 switch result {
                 case .success(let data):
                     do {
                         let response = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
-                        OAuth2TokenStorage.shared.token = response.accessToken
-                        print("[OAuth2Service] Успешно получен и сохранен токен.")
+                        // 10. Очищаем код только после успешного получения токена.
+                        self.currentCode = nil
+                        print("[OAuth2Service] Успешно получен токен.")
                         completion(.success(response.accessToken))
                     } catch {
                         print("[OAuth2Service] Ошибка декодирования: \(error.localizedDescription)")
@@ -80,16 +80,17 @@ final class OAuth2Service {
     }
     
     // MARK: - Private Methods
-    
     private func makeOAuthTokenRequest(code: String) -> URLRequest? {
+        // Базовый URL без параметров
         print("[OAuth2Service] Создаем URLRequest для кода \(code)")
-        
-        guard var urlComponents = URLComponents(string: "https://unsplash.com/oauth/token") else {
-            print("[OAuth2Service] Ошибка: не удалось создать URLComponents")
+        guard let url = URL(string: "https://unsplash.com/oauth/token") else {
+            print("[OAuth2Service] Ошибка: не удалось создать URL")
             return nil
         }
         
-        urlComponents.queryItems = [
+        // Компоненты для тела запроса
+        var components = URLComponents()
+        components.queryItems = [
             URLQueryItem(name: "client_id", value: Constants.accessKey),
             URLQueryItem(name: "client_secret", value: Constants.secretKey),
             URLQueryItem(name: "redirect_uri", value: Constants.redirectURI),
@@ -97,13 +98,11 @@ final class OAuth2Service {
             URLQueryItem(name: "grant_type", value: "authorization_code")
         ]
         
-        guard let url = urlComponents.url else {
-            print("[OAuth2Service] Ошибка: не удалось создать URL из URLComponents")
-            return nil
-        }
-        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        // Кодируем параметры и помещаем их в тело запроса
+        request.httpBody = components.query?.data(using: .utf8)
+        // Устанавливаем заголовок, чтобы сервер знал, как парсить тело
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
         print("[OAuth2Service] URLRequest успешно создан для URL: \(url)")
