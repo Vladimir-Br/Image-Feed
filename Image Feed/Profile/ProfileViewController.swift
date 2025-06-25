@@ -50,6 +50,7 @@ final class ProfileViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupActions()
+        fetchProfileData()
     }
     
     private func setupBackground() {
@@ -96,5 +97,30 @@ final class ProfileViewController: UIViewController {
     
     @objc private func didTapLogoutButton(_ sender: Any) {
         // здесь как я понимаю будет код из следующего спринта
+    }
+    
+    // MARK: - Profile Data Loading
+    private func fetchProfileData() {
+        guard let token = OAuth2TokenStorage.shared.token else {
+            print("[ProfileViewController] Ошибка: токен не найден")
+            return
+        }
+        
+        ProfileService.shared.fetchProfile(token) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let profile):
+                self.updateProfile(profile)
+            case .failure(let error):
+                print("[ProfileViewController] Ошибка загрузки профиля: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func updateProfile(_ profile: Profile) {
+        nameLabel.text = profile.name
+        usernameLabel.text = profile.loginName
+        infoLabel.text = profile.bio ?? ""
     }
 }
