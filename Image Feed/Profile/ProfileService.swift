@@ -92,6 +92,13 @@ final class ProfileService {
         task.resume()
     }
     
+    // MARK: - Public Methods
+    func clearProfile() {
+        profile = nil
+        currentTask?.cancel()
+        currentTask = nil
+    }
+    
     // MARK: - Private Methods
     private func makeProfileRequest(token: String) -> URLRequest? {
         print("[ProfileService] Создаем URLRequest для получения профиля")

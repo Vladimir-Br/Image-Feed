@@ -2,6 +2,8 @@ import UIKit
 
 final class SplashViewController: UIViewController {
     private let showAuthenticationScreenSegueIdentifier = "ShowAuth"
+    private let profileService = ProfileService.shared
+    private let storage = OAuth2TokenStorage.shared
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
@@ -10,8 +12,8 @@ final class SplashViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if let _ = OAuth2TokenStorage.shared.token {
-            switchToTabBarController()
+        if let token = storage.token {
+            fetchProfile(token: token)
         } else {
             performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
         }
@@ -27,6 +29,24 @@ final class SplashViewController: UIViewController {
             .instantiateViewController(withIdentifier: "TabBarViewController")
        
         window.rootViewController = tabBarController
+    }
+    
+    private func fetchProfile(token: String) {
+        UIBlockingProgressHUD.show()
+        profileService.fetchProfile(token) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+
+            guard let self = self else { return }
+
+            switch result {
+            case .success:
+               self.switchToTabBarController()
+
+            case .failure:
+                // TODO [Sprint 11] Покажите ошибку получения профиля
+                break
+            }
+        }
     }
 }
 
@@ -53,7 +73,12 @@ extension SplashViewController {
 extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
         vc.dismiss(animated: true)
-        self.switchToTabBarController()
+       
+        guard let token = storage.token else {
+            return 
+        }
+        
+        fetchProfile(token: token)
     }
 }
 
