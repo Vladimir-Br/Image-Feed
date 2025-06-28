@@ -1,4 +1,3 @@
-
 import Foundation
 
 // MARK: - Ошибки ProfileService
@@ -39,7 +38,6 @@ struct Profile {
 final class ProfileService {
     static let shared = ProfileService()
     private init() {}
-    private let decoder = JSONDecoder()
     private let session = URLSession.shared
     private var currentTask: URLSessionTask?
     private(set) var profile: Profile?
@@ -52,39 +50,29 @@ final class ProfileService {
         
         // Создаем URLRequest
         guard let request = makeProfileRequest(token: token) else {
-            print("[ProfileService] Ошибка: не удалось создать запрос")
+            print("[ProfileService]: RequestCreationError - не удалось создать запрос для токена")
             completion(.failure(ProfileServiceError.invalidRequest))
             return
         }
         
         // Выполняем сетевой запрос
-        let task = session.data(for: request) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
+        let task = session.objectTask(for: request) { [weak self] (result: Result<ProfileResult, Error>) in
+            guard let self = self else { return }
+            
+            self.currentTask = nil
+            
+            switch result {
+            case .success(let profileResult):
+                // Преобразуем в UI модель
+                let profile = Profile(from: profileResult)
                 
-                self.currentTask = nil
+                self.profile = profile
                 
-                switch result {
-                case .success(let data):
-                    do {
-                        // Декодируем ответ от API
-                        let profileResult = try self.decoder.decode(ProfileResult.self, from: data)
-                        
-                        // Преобразуем в UI модель
-                        let profile = Profile(from: profileResult)
-                        
-                        self.profile = profile
-                        
-                        print("[ProfileService] Успешно получен профиль для пользователя: \(profile.username)")
-                        completion(.success(profile))
-                    } catch {
-                        print("[ProfileService] Ошибка декодирования: \(error.localizedDescription)")
-                        completion(.failure(error))
-                    }
-                case .failure(let error):
-                    print("[ProfileService] Ошибка сети: \(error.localizedDescription)")
-                    completion(.failure(error))
-                }
+                print("[ProfileService] Успешно получен профиль для пользователя: \(profile.username)")
+                completion(.success(profile))
+            case .failure(let error):
+                print("[ProfileService]: NetworkError - \(error.localizedDescription)")
+                completion(.failure(error))
             }
         }
         
@@ -104,7 +92,7 @@ final class ProfileService {
         print("[ProfileService] Создаем URLRequest для получения профиля")
         
         guard let url = URL(string: "https://api.unsplash.com/me") else {
-            print("[ProfileService] Ошибка: не удалось создать URL")
+            print("[ProfileService]: URLCreationError - не удалось создать URL для профиля")
             return nil
         }
         

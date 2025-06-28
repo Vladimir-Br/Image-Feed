@@ -21,7 +21,7 @@ final class SplashViewController: UIViewController {
    
     private func switchToTabBarController() {
         guard let window = UIApplication.shared.windows.first else {
-            assertionFailure("Invalid window configuration")
+            print("[SplashViewController]: WindowError - неверная конфигурация окна")
             return
         }
        
@@ -29,6 +29,7 @@ final class SplashViewController: UIViewController {
             .instantiateViewController(withIdentifier: "TabBarViewController")
        
         window.rootViewController = tabBarController
+        print("[SplashViewController]: NavigationSuccess - переход к главному экрану выполнен")
     }
     
     private func fetchProfile(token: String) {
@@ -40,6 +41,8 @@ final class SplashViewController: UIViewController {
 
             switch result {
             case .success(let profile):
+                print("[SplashViewController]: ProfileFetchSuccess - профиль успешно загружен для пользователя \(profile.username)")
+                
                 // Запускаем загрузку URL изображения профиля
                 ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in
                     // Ничего не делаем с результатом - просто запускаем процесс
@@ -48,7 +51,8 @@ final class SplashViewController: UIViewController {
                 // Не дожидаемся завершения загрузки изображения - сразу переходим к главному экрану
                 self.switchToTabBarController()
 
-            case .failure:
+            case .failure(let error):
+                print("[SplashViewController]: ProfileFetchError - \(error.localizedDescription)")
                 // TODO [Sprint 11] Покажите ошибку получения профиля
                 break
             }
@@ -64,7 +68,7 @@ extension SplashViewController {
                 let navigationController = segue.destination as? UINavigationController,
                 let viewController = navigationController.viewControllers[0] as? AuthViewController
             else {
-                assertionFailure("Failed to prepare for \(showAuthenticationScreenSegueIdentifier)")
+                assertionFailure("Не удалось подготовить segue для \(showAuthenticationScreenSegueIdentifier)")
                 return
             }
             
@@ -78,9 +82,11 @@ extension SplashViewController {
 
 extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
+        print("[SplashViewController]: AuthenticationReceived - получена авторизация, начинаем загрузку профиля")
         vc.dismiss(animated: true)
        
         guard let token = storage.token else {
+            print("[SplashViewController]: TokenError - токен не найден после авторизации")
             return 
         }
         

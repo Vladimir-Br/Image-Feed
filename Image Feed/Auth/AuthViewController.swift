@@ -20,7 +20,7 @@ final class AuthViewController: UIViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
             guard let webViewViewController = segue.destination as? WebViewViewController else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
+                assertionFailure("Не удалось подготовить segue для \(showWebViewSegueIdentifier)")
                 return
             }
             webViewViewController.delegate = self
@@ -32,7 +32,7 @@ final class AuthViewController: UIViewController {
     override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
         if identifier == showWebViewSegueIdentifier {
             if isAuthenticating {
-                print("[AuthViewController] Попытка открыть WebView во время авторизации заблокирована")
+                print("[AuthViewController]: SegueBlocked - попытка открыть WebView во время авторизации заблокирована")
                 return false
             }
         }
@@ -61,14 +61,21 @@ extension AuthViewController: WebViewViewControllerDelegate {
                 switch result {
                 case .success(let accessToken):
                     OAuth2TokenStorage.shared.token = accessToken
-                    print("Authentication successful! Token saved.")
+                    print("[AuthViewController]: AuthenticationSuccess - токен успешно сохранен")
                     vc.dismiss(animated: true) {
                         self.delegate?.didAuthenticate(self)
                     }
                 case .failure(let error):
-                    print("Authentication error: \(error.localizedDescription)")
-                    vc.dismiss(animated: true)
-                    // TODO: Показать алерт с ошибкой
+                    print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
+                    let alert = UIAlertController(
+                        title: "Что-то пошло не так",
+                        message: "Не удалось войти в систему",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: { _ in
+                        vc.dismiss(animated: true)
+                    }))
+                    self.present(alert, animated: true)
                 }
             }
         }

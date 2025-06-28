@@ -11,7 +11,6 @@ final class OAuth2Service {
     
     // MARK: - Private Properties
     
-    private let decoder = JSONDecoder()
     private let urlSession = URLSession.shared
     private var currentTask: URLSessionTask?
     private var currentCode: String?
@@ -37,40 +36,32 @@ final class OAuth2Service {
         
         // 5. Создаем запрос.
         guard let request = makeOAuthTokenRequest(code: code) else {
+            print("[OAuth2Service]: RequestCreationError - не удалось создать запрос для кода \(code)")
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
         
         // 6. Создаем сетевую задачу. URLSession сам выполнит ее в фоновом потоке.
-        let task = urlSession.data(for: request) { [weak self] result in
-            // 7. Получив результат (в фоновом потоке), переключаемся на главный поток для обработки.
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                
-                // 8. Очищаем состояние задачи сразу при получении любого результата.
-                self.currentTask = nil
-                
-                // 9. Обрабатываем результат.
-                switch result {
-                case .success(let data):
-                    do {
-                        let response = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
-                        // 10. Очищаем код только после успешного получения токена.
-                        self.currentCode = nil
-                        print("[OAuth2Service] Успешно получен токен.")
-                        completion(.success(response.accessToken))
-                    } catch {
-                        print("[OAuth2Service] Ошибка декодирования: \(error.localizedDescription)")
-                        completion(.failure(error))
-                    }
-                case .failure(let error):
-                    if (error as NSError).code == NSURLErrorCancelled {
-                        print("[OAuth2Service] Запрос был отменен.")
-                    } else {
-                        print("[OAuth2Service] Ошибка сети: \(error.localizedDescription)")
-                        completion(.failure(error))
-                    }
+        let task = urlSession.objectTask(for: request) { [weak self] (result: Result<OAuthTokenResponseBody, Error>) in
+            guard let self = self else { return }
+            
+            // 8. Очищаем состояние задачи сразу при получении любого результата.
+            self.currentTask = nil
+            
+            // 9. Обрабатываем результат.
+            switch result {
+            case .success(let response):
+                // 10. Очищаем код только после успешного получения токена.
+                self.currentCode = nil
+                print("[OAuth2Service] Успешно получен токен.")
+                completion(.success(response.accessToken))
+            case .failure(let error):
+                if (error as NSError).code == NSURLErrorCancelled {
+                    print("[OAuth2Service]: RequestCancelled - запрос был отменен")
+                } else {
+                    print("[OAuth2Service]: NetworkError - \(error.localizedDescription)")
                 }
+                completion(.failure(error))
             }
         }
         
@@ -84,7 +75,7 @@ final class OAuth2Service {
         // Базовый URL без параметров
         print("[OAuth2Service] Создаем URLRequest для кода \(code)")
         guard let url = URL(string: "https://unsplash.com/oauth/token") else {
-            print("[OAuth2Service] Ошибка: не удалось создать URL")
+            print("[OAuth2Service]: URLCreationError - не удалось создать URL для OAuth токена")
             return nil
         }
         
