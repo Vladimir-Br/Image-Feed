@@ -39,8 +39,14 @@ final class SplashViewController: UIViewController {
             guard let self = self else { return }
 
             switch result {
-            case .success:
-               self.switchToTabBarController()
+            case .success(let profile):
+                // Запускаем загрузку URL изображения профиля
+                ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in
+                    // Ничего не делаем с результатом - просто запускаем процесс
+                }
+                
+                // Не дожидаемся завершения загрузки изображения - сразу переходим к главному экрану
+                self.switchToTabBarController()
 
             case .failure:
                 // TODO [Sprint 11] Покажите ошибку получения профиля

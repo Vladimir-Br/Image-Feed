@@ -44,6 +44,10 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Properties
+    private var profileImageServiceObserver: NSObjectProtocol?
+    
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBackground()
@@ -57,6 +61,39 @@ final class ProfileViewController: UIViewController {
         } else {
             print("[ProfileViewController] Профиль еще не загружен")
         }
+        
+        // Подписываемся на уведомления об изменении аватара
+        profileImageServiceObserver = NotificationCenter.default
+            .addObserver(
+                forName: ProfileImageService.didChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+        
+        // Обновляем аватар при загрузке view
+        updateAvatar()
+    }
+    
+    // MARK: - Deinitialization
+    // deinit можно убрать - автоматическая отписка работает
+    // Но если хотите явно контролировать - оставьте для читаемости кода
+    deinit {
+        print("[ProfileViewController] Деинициализация")
+        // Необязательно, но можно оставить для явности
+        // profileImageServiceObserver = nil
+    }
+    
+    // MARK: - Avatar Update
+    private func updateAvatar() {
+        guard
+            let profileImageURL = ProfileImageService.shared.avatarURL,
+            let url = URL(string: profileImageURL)
+        else { return }
+        
+        // TODO [Sprint 11] Обновить аватар, используя Kingfisher
     }
     
     private func setupBackground() {
