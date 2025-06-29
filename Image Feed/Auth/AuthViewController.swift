@@ -49,36 +49,47 @@ final class AuthViewController: UIViewController {
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        isAuthenticating = true
         
+        isAuthenticating = true
         UIBlockingProgressHUD.show()
+        
         oauth2Service.fetchOAuthToken(code) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
+               
                 self.isAuthenticating = false
-                
                 UIBlockingProgressHUD.dismiss()
+                
                 switch result {
                 case .success(let accessToken):
-                    OAuth2TokenStorage.shared.token = accessToken
-                    print("[AuthViewController]: AuthenticationSuccess - токен успешно сохранен")
-                    vc.dismiss(animated: true) {
-                        self.delegate?.didAuthenticate(self)
-                    }
+                    self.handleAuthSuccess(from: vc, with: accessToken)
+                    
                 case .failure(let error):
                     print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
-                    let alert = UIAlertController(
-                        title: "Что-то пошло не так",
-                        message: "Не удалось войти в систему",
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: { _ in
-                        vc.dismiss(animated: true)
-                    }))
-                    self.present(alert, animated: true)
+                    self.showAuthErrorAlert(vc: vc)
                 }
             }
         }
+    }
+    
+    private func handleAuthSuccess(from vc: WebViewViewController, with token: String) {
+        OAuth2TokenStorage.shared.token = token
+        print("[AuthViewController]: AuthenticationSuccess - токен успешно сохранен")
+        vc.dismiss(animated: true) {
+            self.delegate?.didAuthenticate(self)
+        }
+    }
+    
+    private func showAuthErrorAlert(vc: WebViewViewController) {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: { _ in
+            vc.dismiss(animated: true)
+        }))
+        present(alert, animated: true)
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
@@ -86,4 +97,3 @@ extension AuthViewController: WebViewViewControllerDelegate {
     }
 }
     
-
