@@ -1,4 +1,5 @@
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     private let profileImageView: UIImageView = {
@@ -88,12 +89,29 @@ final class ProfileViewController: UIViewController {
     
     // MARK: - Avatar Update
     private func updateAvatar() {
+        // 1. Безопасно получаем URL аватара
         guard
             let profileImageURL = ProfileImageService.shared.avatarURL,
             let url = URL(string: profileImageURL)
-        else { return }
+        else {
+            print("[ProfileViewController] Не удалось получить URL аватара")
+            return
+        }
         
-        // TODO [Sprint 11] Обновить аватар, используя Kingfisher
+        // 2. Используем Kingfisher для загрузки и установки изображения
+        profileImageView.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "placeholder"),
+            options: [
+                .cacheOriginalImage // Кешируем оригинальное изображение
+            ]) { result in
+                switch result {
+                case .success(let value):
+                    print("[ProfileViewController] Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("[ProfileViewController] Ошибка загрузки аватара: \(error.localizedDescription)")
+                }
+            }
     }
     
     private func setupBackground() {
