@@ -9,7 +9,6 @@ final class AuthViewController: UIViewController {
     private let showWebViewSegueIdentifier = "ShowWebView"
     private let oauth2Service = OAuth2Service.shared
     weak var delegate: AuthViewControllerDelegate?
-    
     private var isAuthenticating = false
     
     override func viewDidLoad() {
@@ -49,21 +48,16 @@ final class AuthViewController: UIViewController {
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        
         isAuthenticating = true
         UIBlockingProgressHUD.show()
-        
         oauth2Service.fetchOAuthToken(code) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
-               
                 self.isAuthenticating = false
                 UIBlockingProgressHUD.dismiss()
-                
                 switch result {
                 case .success(let accessToken):
                     self.handleAuthSuccess(from: vc, with: accessToken)
-                    
                 case .failure(let error):
                     print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
                     self.showAuthErrorAlert(vc: vc)

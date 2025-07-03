@@ -1,40 +1,5 @@
 import Foundation
 
-// MARK: - Ошибки ProfileService
-enum ProfileServiceError: Error {
-    case invalidRequest
-    case notAuthorized
-}
-
-struct ProfileResult: Codable {
-    let username: String
-    let firstName: String?
-    let lastName: String?
-    let bio: String?   
-
-    enum CodingKeys: String, CodingKey {
-        case username
-        case firstName = "first_name"
-        case lastName = "last_name"
-        case bio
-    }
-}
-
-struct Profile {
-    let username: String
-    let name: String
-    let loginName: String
-    let bio: String?
-
-    init(from profileResult: ProfileResult) {
-        self.username = profileResult.username
-        let firstName = profileResult.firstName ?? ""
-        let lastName = profileResult.lastName ?? ""
-        self.name = [firstName, lastName].filter { !$0.isEmpty }.joined(separator: " ")
-        self.loginName = "@\(profileResult.username)"
-        self.bio = profileResult.bio
-    }
-}
 final class ProfileService {
     static let shared = ProfileService()
     private init() {}
@@ -44,30 +9,19 @@ final class ProfileService {
     
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
         assert(Thread.isMainThread)
-        
-        // Отменяем предыдущий запрос, если он есть
         currentTask?.cancel()
-        
-        // Создаем URLRequest
         guard let request = makeProfileRequest(token: token) else {
             print("[ProfileService]: RequestCreationError - не удалось создать запрос для токена")
             completion(.failure(ProfileServiceError.invalidRequest))
             return
         }
-        
-        // Выполняем сетевой запрос
         let task = session.objectTask(for: request) { [weak self] (result: Result<ProfileResult, Error>) in
             guard let self = self else { return }
-            
             self.currentTask = nil
-            
             switch result {
             case .success(let profileResult):
-                // Преобразуем в UI модель
                 let profile = Profile(from: profileResult)
-                
                 self.profile = profile
-                
                 print("[ProfileService] Успешно получен профиль для пользователя: \(profile.username)")
                 completion(.success(profile))
             case .failure(let error):
@@ -75,22 +29,18 @@ final class ProfileService {
                 completion(.failure(error))
             }
         }
-        
         currentTask = task
         task.resume()
     }
     
-    // MARK: - Public Methods
     func clearProfile() {
         profile = nil
         currentTask?.cancel()
         currentTask = nil
     }
     
-    // MARK: - Private Methods
     private func makeProfileRequest(token: String) -> URLRequest? {
         print("[ProfileService] Создаем URLRequest для получения профиля")
-        
         guard let url = URL(string: "https://api.unsplash.com/me") else {
             print("[ProfileService]: URLCreationError - не удалось создать URL для профиля")
             return nil
@@ -99,7 +49,6 @@ final class ProfileService {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
         print("[ProfileService] URLRequest успешно создан для URL: \(url)")
         return request
     }

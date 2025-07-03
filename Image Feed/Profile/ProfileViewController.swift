@@ -45,10 +45,8 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
-    // MARK: - Properties
     private var profileImageServiceObserver: NSObjectProtocol?
     
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBackground()
@@ -56,14 +54,12 @@ final class ProfileViewController: UIViewController {
         setupConstraints()
         setupActions()
         
-        // Проверяем наличие профиля и обновляем UI
         if let profile = ProfileService.shared.profile {
             updateProfileDetails(profile: profile)
         } else {
             print("[ProfileViewController] Профиль еще не загружен")
         }
         
-        // Подписываемся на уведомления об изменении аватара
         profileImageServiceObserver = NotificationCenter.default
             .addObserver(
                 forName: ProfileImageService.didChangeNotification,
@@ -74,22 +70,14 @@ final class ProfileViewController: UIViewController {
                 self.updateAvatar()
             }
         
-        // Обновляем аватар при загрузке view
         updateAvatar()
     }
     
-    // MARK: - Deinitialization
-    // deinit можно убрать - автоматическая отписка работает
-    // Но если хотите явно контролировать - оставьте для читаемости кода
     deinit {
         print("[ProfileViewController] Деинициализация")
-        // Необязательно, но можно оставить для явности
-        // profileImageServiceObserver = nil
     }
     
-    // MARK: - Avatar Update
     private func updateAvatar() {
-        // 1. Безопасно получаем URL аватара
         guard
             let profileImageURL = ProfileImageService.shared.avatarURL,
             let url = URL(string: profileImageURL)
@@ -98,12 +86,11 @@ final class ProfileViewController: UIViewController {
             return
         }
         
-        // 2. Используем Kingfisher для загрузки и установки изображения
         profileImageView.kf.setImage(
             with: url,
             placeholder: UIImage(named: "placeholder"),
             options: [
-                .cacheOriginalImage // Кешируем оригинальное изображение
+                .cacheOriginalImage 
             ]) { result in
                 switch result {
                 case .success(let value):
@@ -160,7 +147,6 @@ final class ProfileViewController: UIViewController {
         // здесь как я понимаю будет код из следующего спринта
     }
     
-    // MARK: - Profile Data Display
     private func updateProfileDetails(profile: Profile) {
         nameLabel.text = profile.name
         usernameLabel.text = profile.loginName

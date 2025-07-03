@@ -1,6 +1,6 @@
 import Foundation
 
-enum NetworkError: Error { 
+enum NetworkError: Error {
     case httpStatusCode(Int)
     case urlRequestError(Error)
     case urlSessionError
@@ -11,7 +11,7 @@ extension URLSession {
         for request: URLRequest,
         completion: @escaping (Result<Data, Error>) -> Void
     ) -> URLSessionTask {
-        let fulfillCompletionOnTheMainThread: (Result<Data, Error>) -> Void = { result in 
+        let fulfillCompletionOnTheMainThread: (Result<Data, Error>) -> Void = { result in
             DispatchQueue.main.async {
                 completion(result)
             }

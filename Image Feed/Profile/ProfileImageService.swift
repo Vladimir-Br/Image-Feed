@@ -1,68 +1,35 @@
 import Foundation
 
-// Добавляем enum для ошибок ProfileImageService
-enum ProfileImageServiceError: Error {
-    case invalidRequest
-    case notAuthorized
-    case invalidData
-}
-// Эти структуры лучше объявить за пределами класса для лучшей читаемости.
-struct UserResult: Codable {
-    let profileImage: ProfileImageURL
-
-    enum CodingKeys: String, CodingKey {
-        case profileImage = "profile_image"
-    }
-}
-
-struct ProfileImageURL: Codable {
-    let small: String?
-}
-
-
-
 final class ProfileImageService {
     static let didChangeNotification = Notification.Name(rawValue: "ProfileImageProviderDidChange")
     static let shared = ProfileImageService()
     private init() {}
     
-    // MARK: - Public Properties
     private(set) var avatarURL: String?
     
-    // MARK: - Private Properties
     private var currentTask: URLSessionTask?
     private let urlSession = URLSession.shared
-    private let tokenStorage = OAuth2TokenStorage.shared // Получаем доступ к хранилищу
-    
-    // MARK: - Public Methods
+    private let tokenStorage = OAuth2TokenStorage.shared
+   
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
-        assert(Thread.isMainThread, "Этот метод должен вызываться из главного потока")
-
-        // Предотвращаем гонку
+        assert(Thread.isMainThread)
         currentTask?.cancel()
-        
-        // Получаем токен
         guard let token = tokenStorage.token else {
             completion(.failure(ProfileImageServiceError.notAuthorized))
             return
         }
 
-        // Создаем запрос
         guard let request = makeProfileImageRequest(username: username, token: token) else {
             print("[ProfileImageService]: RequestCreationError - не удалось создать запрос для пользователя \(username)")
             completion(.failure(ProfileImageServiceError.invalidRequest))
             return
         }
         
-        // Выполняем сетевой запрос
         let task = urlSession.objectTask(for: request) { [weak self] (result: Result<UserResult, Error>) in
             guard let self = self else { return }
-            
             self.currentTask = nil
-            
             switch result {
             case .success(let userResult):
-                // Проверяем наличие URL
                 guard let smallImageURL = userResult.profileImage.small else {
                     completion(.failure(ProfileImageServiceError.invalidData))
                     return
@@ -71,8 +38,6 @@ final class ProfileImageService {
                 self.avatarURL = smallImageURL
                 print("[ProfileImageService] Успешно получен URL аватара: \(smallImageURL)")
                 completion(.success(smallImageURL))
-                
-                // Публикуем уведомление об изменении URL аватара
                 NotificationCenter.default
                     .post(
                         name: ProfileImageService.didChangeNotification,
@@ -85,15 +50,12 @@ final class ProfileImageService {
                 completion(.failure(error))
             }
         }
-        
         self.currentTask = task
         task.resume()
     }
     
-    // MARK: - Private Methods
     private func makeProfileImageRequest(username: String, token: String) -> URLRequest? {
         print("[ProfileImageService] Создаем URLRequest для получения URL аватара")
-        
         guard let url = URL(string: "https://api.unsplash.com/users/\(username)") else {
             print("[ProfileImageService]: URLCreationError - не удалось создать URL для пользователя \(username)")
             return nil
@@ -102,7 +64,6 @@ final class ProfileImageService {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
         print("[ProfileImageService] URLRequest успешно создан для URL: \(url)")
         return request
     }

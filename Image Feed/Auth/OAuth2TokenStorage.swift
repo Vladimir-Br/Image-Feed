@@ -26,7 +26,6 @@ final class OAuth2TokenStorage {
         }
     }
     
-    // Метод для очистки токена
     func clearToken() {
         let isSuccess = KeychainWrapper.standard.removeObject(forKey: tokenKey)
         if !isSuccess {

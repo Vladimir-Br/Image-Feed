@@ -16,8 +16,6 @@ final class WebViewViewController: UIViewController {
     @IBOutlet private weak var progressView: UIProgressView!
     
     weak var delegate: WebViewViewControllerDelegate?
-    
-    // MARK: - Properties
     private var estimatedProgressObservation: NSKeyValueObservation?
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -28,7 +26,6 @@ final class WebViewViewController: UIViewController {
         super.viewDidLoad()
         webView.navigationDelegate = self
         
-        // Настраиваем наблюдение за прогрессом загрузки
         estimatedProgressObservation = webView.observe(
             \.estimatedProgress,
             options: [],

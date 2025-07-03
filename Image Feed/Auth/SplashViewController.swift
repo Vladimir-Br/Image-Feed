@@ -1,10 +1,10 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
+    
     private let profileService = ProfileService.shared
     private let storage = OAuth2TokenStorage.shared
     
-    // 1. Создаём свойство для логотипа
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -24,13 +24,11 @@ final class SplashViewController: UIViewController {
     }
     
     private func setupLogo() {
-        // 2. Добавляем на вью
         view.addSubview(logoImageView)
-        // 3. Центрируем
         NSLayoutConstraint.activate([
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 75), // размеры из Storyboard
+            logoImageView.widthAnchor.constraint(equalToConstant: 75), 
             logoImageView.heightAnchor.constraint(equalToConstant: 78)
         ])
     }
@@ -46,7 +44,6 @@ final class SplashViewController: UIViewController {
     }
     
     private func showAuthController() {
-        // 4. Создаём AuthViewController программно
         let storyboard = UIStoryboard(name: "Main", bundle: .main)
         guard let navigationController = storyboard.instantiateViewController(withIdentifier: "AuthNavigationController") as? UINavigationController,
               let viewController = navigationController.viewControllers.first as? AuthViewController else {
