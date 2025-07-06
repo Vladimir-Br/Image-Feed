@@ -51,17 +51,16 @@ extension AuthViewController: WebViewViewControllerDelegate {
         isAuthenticating = true
         UIBlockingProgressHUD.show()
         oauth2Service.fetchOAuthToken(code) { [weak self] result in
-            guard let self = self else { return }
             DispatchQueue.main.async {
-                self.isAuthenticating = false
                 UIBlockingProgressHUD.dismiss()
-                switch result {
-                case .success(let accessToken):
-                    self.handleAuthSuccess(from: vc, with: accessToken)
-                case .failure(let error):
-                    print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
-                    self.showAuthErrorAlert(vc: vc)
-                }
+            }
+            guard let self = self else { return }
+            switch result {
+            case .success(let accessToken):
+                self.handleAuthSuccess(from: vc, with: accessToken)
+            case .failure(let error):
+                print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
+                self.showAuthErrorAlert(vc: vc)
             }
         }
     }
