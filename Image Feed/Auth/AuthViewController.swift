@@ -1,4 +1,5 @@
 import UIKit
+import ProgressHUD
 
 protocol AuthViewControllerDelegate: AnyObject {
     func didAuthenticate(_ vc: AuthViewController)
@@ -8,6 +9,7 @@ final class AuthViewController: UIViewController {
     private let showWebViewSegueIdentifier = "ShowWebView"
     private let oauth2Service = OAuth2Service.shared
     weak var delegate: AuthViewControllerDelegate?
+    private var isAuthenticating = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -17,13 +19,23 @@ final class AuthViewController: UIViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
             guard let webViewViewController = segue.destination as? WebViewViewController else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
+                assertionFailure("Не удалось подготовить segue для \(showWebViewSegueIdentifier)")
                 return
             }
             webViewViewController.delegate = self
         } else {
             super.prepare(for: segue, sender: sender)
         }
+    }
+    
+    override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
+        if identifier == showWebViewSegueIdentifier {
+            if isAuthenticating {
+                print("[AuthViewController]: SegueBlocked - попытка открыть WebView во время авторизации заблокирована")
+                return false
+            }
+        }
+        return super.shouldPerformSegue(withIdentifier: identifier, sender: sender)
     }
     
     private func configureBackButton() {
@@ -36,21 +48,41 @@ final class AuthViewController: UIViewController {
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        oauth2Service.fetchOAuthToken(code: code) { [weak self] result in
+        isAuthenticating = true
+        UIBlockingProgressHUD.show()
+        oauth2Service.fetchOAuthToken(code) { [weak self] result in
+            DispatchQueue.main.async {
+                UIBlockingProgressHUD.dismiss()
+            }
             guard let self = self else { return }
             switch result {
-            case .success(let token):
-                OAuth2TokenStorage.shared.token = token
-                print("Authentication successful! Token saved.")
-                vc.dismiss(animated: true) {
-                    self.delegate?.didAuthenticate(self)
-                }
+            case .success(let accessToken):
+                self.handleAuthSuccess(from: vc, with: accessToken)
             case .failure(let error):
-                print("Authentication error: \(error.localizedDescription)")
-                vc.dismiss(animated: true)
-                // TODO: Показать алерт с ошибкой
+                print("[AuthViewController]: AuthenticationError - \(error.localizedDescription)")
+                self.showAuthErrorAlert(vc: vc)
             }
         }
+    }
+    
+    private func handleAuthSuccess(from vc: WebViewViewController, with token: String) {
+        OAuth2TokenStorage.shared.token = token
+        print("[AuthViewController]: AuthenticationSuccess - токен успешно сохранен")
+        vc.dismiss(animated: true) {
+            self.delegate?.didAuthenticate(self)
+        }
+    }
+    
+    private func showAuthErrorAlert(vc: WebViewViewController) {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: { _ in
+            vc.dismiss(animated: true)
+        }))
+        present(alert, animated: true)
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
@@ -58,4 +90,3 @@ extension AuthViewController: WebViewViewControllerDelegate {
     }
 }
     
-

@@ -1,4 +1,5 @@
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     private let profileImageView: UIImageView = {
@@ -44,12 +45,60 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
+    private var profileImageServiceObserver: NSObjectProtocol?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBackground()
         setupUI()
         setupConstraints()
         setupActions()
+        
+        if let profile = ProfileService.shared.profile {
+            updateProfileDetails(profile: profile)
+        } else {
+            print("[ProfileViewController] Профиль еще не загружен")
+        }
+        
+        profileImageServiceObserver = NotificationCenter.default
+            .addObserver(
+                forName: ProfileImageService.didChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+        
+        updateAvatar()
+    }
+    
+    deinit {
+        print("[ProfileViewController] Деинициализация")
+    }
+    
+    private func updateAvatar() {
+        guard
+            let profileImageURL = ProfileImageService.shared.avatarURL,
+            let url = URL(string: profileImageURL)
+        else {
+            print("[ProfileViewController] Не удалось получить URL аватара")
+            return
+        }
+        
+        profileImageView.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "placeholder"),
+            options: [
+                .cacheOriginalImage 
+            ]) { result in
+                switch result {
+                case .success(let value):
+                    print("[ProfileViewController] Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("[ProfileViewController] Ошибка загрузки аватара: \(error.localizedDescription)")
+                }
+            }
     }
     
     private func setupBackground() {
@@ -96,5 +145,11 @@ final class ProfileViewController: UIViewController {
     
     @objc private func didTapLogoutButton(_ sender: Any) {
         // здесь как я понимаю будет код из следующего спринта
+    }
+    
+    private func updateProfileDetails(profile: Profile) {
+        nameLabel.text = profile.name
+        usernameLabel.text = profile.loginName
+        infoLabel.text = profile.bio ?? ""
     }
 }
