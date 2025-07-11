@@ -95,6 +95,7 @@ extension ImagesListViewController {
     func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let photo = photos[indexPath.row]
         if let url = URL(string: photo.thumbImageURL) {
+            cell.cellImage.kf.indicatorType = .activity
             cell.cellImage.kf.setImage(
                 with: url,
                 placeholder: UIImage(named: "Stub")
@@ -102,6 +103,7 @@ extension ImagesListViewController {
                 guard let self = self else { return }
                 switch result {
                 case .success:
+                    // Обновляем высоту ячейки под реальные пропорции изображения
                     self.tableView.reloadRows(at: [indexPath], with: .automatic)
                 case .failure:
                     cell.cellImage.image = UIImage(named: "Stub")
@@ -110,10 +112,9 @@ extension ImagesListViewController {
         } else {
             cell.cellImage.image = UIImage(named: "Stub")
         }
-        cell.dateLabel.text = photo.createdAt != nil ? dateFormatter.string(from: photo.createdAt!) : ""
+        cell.dateLabel.text = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
         let likeImage = photo.isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
         cell.likeButton.setImage(likeImage, for: .normal)
-        cell.cellImage.kf.indicatorType = .activity
     }
 }
 
@@ -124,12 +125,23 @@ extension ImagesListViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let photo = photos[indexPath.row]
-        let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
-        let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
-        let imageWidth = photo.size.width
-        let scale = imageViewWidth / imageWidth
-        let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
-        return cellHeight
+        
+        // Проверяем, загружено ли изображение в ячейке
+        if let cell = tableView.cellForRow(at: indexPath) as? ImagesListCell,
+           let image = cell.cellImage.image,
+           image != UIImage(named: "Stub") {
+            // Изображение загружено - вычисляем высоту по его пропорциям
+            let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
+            let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
+            let imageWidth = photo.size.width
+            let scale = imageViewWidth / imageWidth
+            let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
+            return cellHeight
+        } else {
+            // Изображение не загружено - возвращаем фиксированную высоту для placeholder
+            // 252 (высота placeholder) + 8 (отступы сверху и снизу)
+            return 260
+        }
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {

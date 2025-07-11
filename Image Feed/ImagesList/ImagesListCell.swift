@@ -12,6 +12,6 @@ final class ImagesListCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         cellImage.kf.cancelDownloadTask()
-        cellImage.image = nil
+        cellImage.image = UIImage(named: "Stub")
     }
 }
