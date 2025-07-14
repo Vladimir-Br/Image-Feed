@@ -47,9 +47,6 @@ struct Photo {
     let isLiked: Bool
 }
 
-// MARK: - Network Errors
-// enum NetworkError удалён, используем общий из Models/NetworkError.swift
-
 final class ImagesListService {
     // MARK: - Notifications
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
@@ -59,6 +56,13 @@ final class ImagesListService {
     private var lastLoadedPage: Int?
     private var isLoading: Bool = false
     
+    // MARK: - Date Formatter
+    private lazy var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return formatter
+    }()
+
     // MARK: - Networking
     func fetchPhotosNextPage() {
         // Если уже идёт загрузка — выходим
@@ -86,7 +90,7 @@ final class ImagesListService {
                     self.lastLoadedPage = nextPage
                     
                 case .failure(let error):
-                    print("Ошибка загрузки фотографий: \(error)")
+                    print("[ImagesListService] Ошибка загрузки фотографий: \(error)")
                 }
                 
                 self.isLoading = false
@@ -95,6 +99,67 @@ final class ImagesListService {
         }
     }
     
+    func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
+        // Получаем токен авторизации
+        guard let token = OAuth2TokenStorage.shared.token else {
+            completion(.failure(NetworkError.invalidResponse))
+            return
+        }
+
+        // Формируем URL
+        let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NetworkError.invalidURL))
+            return
+        }
+
+        // Создаём запрос
+        var request = URLRequest(url: url)
+        request.httpMethod = isLike ? "POST" : "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // Выполняем запрос
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(.failure(NetworkError.urlRequestError(error)))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(NetworkError.invalidResponse))
+                    return
+                }
+
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    completion(.failure(NetworkError.httpStatusCode(httpResponse.statusCode)))
+                    return
+                }
+
+                // После успешного запроса обновляем массив photos
+                // Поиск индекса элемента
+                if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
+                    // Текущий элемент
+                    let photo = self.photos[index]
+                    // Копия элемента с инвертированным значением isLiked
+                    let newPhoto = Photo(
+                        id: photo.id,
+                        size: photo.size,
+                        createdAt: photo.createdAt,
+                        welcomeDescription: photo.welcomeDescription,
+                        thumbImageURL: photo.thumbImageURL,
+                        largeImageURL: photo.largeImageURL,
+                        isLiked: !photo.isLiked
+                    )
+                    // Заменяем элемент в массиве
+                    self.photos = self.photos.withReplaced(itemAt: index, newValue: newPhoto)
+                }
+                
+                completion(.success(()))
+            }
+        }.resume()
+    }
+
     // MARK: - Private Methods
     private func makeRequest(page: Int) -> URLRequest? {
         var urlComponents = URLComponents(string: "https://api.unsplash.com/photos")!
@@ -135,9 +200,6 @@ final class ImagesListService {
     }
     
     private func convertToPhotos(_ photoResults: [PhotoResult]) -> [Photo] {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
         return photoResults.map { photoResult in
             Photo(
                 id: photoResult.id,
@@ -149,6 +211,15 @@ final class ImagesListService {
                 isLiked: photoResult.likedByUser
             )
         }
+    }
+}
+
+// MARK: - Array Extension
+extension Array {
+    func withReplaced(itemAt index: Int, newValue: Element) -> [Element] {
+        var array = self
+        array.replaceSubrange(index...index, with: [newValue])
+        return array
     }
 }
 

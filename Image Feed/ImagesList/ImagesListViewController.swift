@@ -103,9 +103,13 @@ extension ImagesListViewController {
                 guard let self = self else { return }
                 switch result {
                 case .success:
-                    // Обновляем высоту ячейки под реальные пропорции изображения
-                    self.tableView.reloadRows(at: [indexPath], with: .automatic)
-                case .failure:
+                    // Обновляем высоту ячейки под реальные пропорции изображения, только если она видима
+                    if let visiblePaths = self.tableView.indexPathsForVisibleRows,
+                       visiblePaths.contains(indexPath) {
+                        self.tableView.reloadRows(at: [indexPath], with: .none)
+                    }
+                case .failure(let error):
+                    print("[ImagesListViewController] Ошибка загрузки изображения: \(error)")
                     cell.cellImage.image = UIImage(named: "Stub")
                 }
             }
