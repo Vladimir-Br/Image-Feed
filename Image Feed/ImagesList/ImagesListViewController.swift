@@ -1,4 +1,5 @@
 import UIKit
+import ProgressHUD
 
 final class ImagesListViewController: UIViewController {
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
@@ -70,9 +71,7 @@ final class ImagesListViewController: UIViewController {
         }
     }
 }
-    
-
-
+ 
 extension ImagesListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return photos.count
@@ -84,7 +83,7 @@ extension ImagesListViewController: UITableViewDataSource {
         guard let imageListCell = cell as? ImagesListCell else {
             return UITableViewCell()
         }
-
+        imageListCell.delegate = self
         configCell(for: imageListCell, with: indexPath)
 
         return imageListCell
@@ -99,18 +98,12 @@ extension ImagesListViewController {
             cell.cellImage.kf.setImage(
                 with: url,
                 placeholder: UIImage(named: "Stub")
-            ) { [weak self] result in
-                guard let self = self else { return }
+            ) { result in
                 switch result {
                 case .success:
-                    // Обновляем высоту ячейки под реальные пропорции изображения, только если она видима
-                    if let visiblePaths = self.tableView.indexPathsForVisibleRows,
-                       visiblePaths.contains(indexPath) {
-                        self.tableView.reloadRows(at: [indexPath], with: .none)
-                    }
+                    break
                 case .failure(let error):
                     print("[ImagesListViewController] Ошибка загрузки изображения: \(error)")
-                    cell.cellImage.image = UIImage(named: "Stub")
                 }
             }
         } else {
@@ -129,23 +122,12 @@ extension ImagesListViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let photo = photos[indexPath.row]
-        
-        // Проверяем, загружено ли изображение в ячейке
-        if let cell = tableView.cellForRow(at: indexPath) as? ImagesListCell,
-           let image = cell.cellImage.image,
-           image != UIImage(named: "Stub") {
-            // Изображение загружено - вычисляем высоту по его пропорциям
-            let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
-            let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
-            let imageWidth = photo.size.width
-            let scale = imageViewWidth / imageWidth
-            let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
-            return cellHeight
-        } else {
-            // Изображение не загружено - возвращаем фиксированную высоту для placeholder
-            // 252 (высота placeholder) + 8 (отступы сверху и снизу)
-            return 260
-        }
+        let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
+        let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
+        let imageWidth = photo.size.width
+        let scale = imageViewWidth / imageWidth
+        let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
+        return cellHeight
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -155,4 +137,42 @@ extension ImagesListViewController: UITableViewDelegate {
     }
 }
 
-
+extension ImagesListViewController: ImagesListCellDelegate {
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        // 1. Находим indexPath ячейки, по которой кликнули
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        
+        // 2. Получаем объект Photo для этой ячейки
+        let photo = photos[indexPath.row]
+        
+        // 3. Показываем лоадер, чтобы заблокировать UI
+        UIBlockingProgressHUD.show()
+        
+        // 4. Вызываем метод сервиса для изменения лайка
+        imagesListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success:
+                // 5. В случае успеха:
+                // Синхронизируем наш массив photos с тем, что в сервисе.
+                // Сервис должен сам обновить состояние лайка у фото внутри себя.
+                self.photos = self.imagesListService.photos
+                
+                // Обновляем вид кнопки в ячейке через новый метод
+                cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                
+                // Убираем лоадер
+                UIBlockingProgressHUD.dismiss()
+                
+            case .failure:
+                // 6. В случае ошибки:
+                // Убираем лоадер
+                UIBlockingProgressHUD.dismiss()
+                
+                // TODO: Показать пользователю алерт об ошибке
+                print("[ImagesListViewController] Ошибка изменения лайка")
+            }
+        }
+    }
+}
