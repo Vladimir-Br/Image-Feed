@@ -97,22 +97,23 @@ extension ImagesListViewController: UITableViewDataSource {
 }
 
 extension ImagesListViewController {
-    private func configureCell(_ cell: ImagesListCell, with photo: Photo) {
-        // Форматируем дату в контроллере, используя существующий dateFormatter
+    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+        let photo = photos[indexPath.row]
+        
+        // 1. Форматируем дату
         let dateText = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
         
-        // Конфигурируем UI ячейки
+        // 2. Конфигурируем текстовые поля и лайк
         cell.configure(with: photo, dateText: dateText)
-    }
-    
-    private func loadImage(for cell: ImagesListCell, with photo: Photo) {
-        // Загружаем изображение
+        
+        // 3. Загружаем изображение
         if let url = URL(string: photo.thumbImageURL) {
             cell.cellImage.kf.indicatorType = .activity
             cell.cellImage.kf.setImage(
-                with: url,
+                with: url, 
                 placeholder: UIImage(named: "Stub")
-            ) { result in
+            ) { [weak self] result in
+                guard let self = self else { return }
                 switch result {
                 case .success:
                     break
@@ -123,14 +124,6 @@ extension ImagesListViewController {
         } else {
             cell.cellImage.image = UIImage(named: "Stub")
         }
-    }
-    
-    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let photo = photos[indexPath.row]
-        
-        // Разделяем ответственность: конфигурация UI и загрузка изображения
-        configureCell(cell, with: photo)
-        loadImage(for: cell, with: photo)
     }
 }
 

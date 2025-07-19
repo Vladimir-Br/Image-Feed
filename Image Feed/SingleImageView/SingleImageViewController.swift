@@ -1,4 +1,5 @@
 import UIKit
+import Kingfisher
 
 final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
     @IBOutlet private weak var imageView: UIImageView!
