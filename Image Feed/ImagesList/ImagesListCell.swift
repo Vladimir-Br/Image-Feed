@@ -15,18 +15,27 @@ final class ImagesListCell: UITableViewCell {
     
     weak var delegate: ImagesListCellDelegate?
     
+    func configure(with photo: Photo, dateText: String) {
+        // Настройка даты (используем готовую строку из контроллера)
+        dateLabel.text = dateText
+        
+        // Настройка кнопки лайка
+        let likeImage = photo.isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
+        likeButton.setImage(likeImage, for: .normal)
+    }
+    
+    func setIsLiked(_ isLiked: Bool) {
+        let likeImage = isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
+        likeButton.setImage(likeImage, for: .normal)
+    }
+    
+    @IBAction private func likeButtonClicked() {
+        delegate?.imageListCellDidTapLike(self)
+    }
+    
     override func prepareForReuse() {
         super.prepareForReuse()
         cellImage.kf.cancelDownloadTask()
         cellImage.image = UIImage(named: "Stub")
-    }
-    func setIsLiked(_ isLiked: Bool) {
-            let likeImage = isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
-            
-            likeButton.setImage(likeImage, for: .normal)
-        }
-    
-    @IBAction private func likeButtonClicked() {
-        delegate?.imageListCellDidTapLike(self)
     }
 }

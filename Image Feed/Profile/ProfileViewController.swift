@@ -90,7 +90,7 @@ final class ProfileViewController: UIViewController {
             with: url,
             placeholder: UIImage(named: "placeholder"),
             options: [
-                .cacheOriginalImage 
+                .cacheOriginalImage
             ]) { result in
                 switch result {
                 case .success(let value):
@@ -143,13 +143,48 @@ final class ProfileViewController: UIViewController {
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
     }
     
-    @objc private func didTapLogoutButton(_ sender: Any) {
-        // здесь как я понимаю будет код из следующего спринта
-    }
-    
     private func updateProfileDetails(profile: Profile) {
         nameLabel.text = profile.name
         usernameLabel.text = profile.loginName
         infoLabel.text = profile.bio ?? ""
+    }
+    
+    private func showLogoutAlert() {
+        let alert = UIAlertController(
+            title: "Пока, пока!",
+            message: "Уверены, что хотите выйти?",
+            preferredStyle: .alert
+        )
+        
+        let confirmAction = UIAlertAction(title: "Да", style: .destructive) { [weak self] _ in
+            self?.performLogout()
+        }
+        
+        let cancelAction = UIAlertAction(title: "Нет", style: .default)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true, completion: nil)
+    }
+    
+    @objc private func didTapLogoutButton(_ sender: Any) {
+        showLogoutAlert()
+    }
+    
+    private func performLogout() {
+        ProfileLogoutService.shared.logout()
+        
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            print("[ProfileViewController] Не удалось получить главное окно")
+            return
+        }
+
+        let splashViewController = SplashViewController()
+
+        UIView.transition(with: window, duration: 0.3, options: .transitionFlipFromLeft) {
+            window.rootViewController = splashViewController
+        }
     }
 }

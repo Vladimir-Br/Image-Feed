@@ -6,7 +6,7 @@ final class ImagesListViewController: UIViewController {
     @IBOutlet private weak var tableView: UITableView!
     
     private var photos: [Photo] = []
-    private let imagesListService = ImagesListService()
+    private let imagesListService = ImagesListService.shared
     private var notificationToken: NSObjectProtocol?
     
     private lazy var dateFormatter: DateFormatter = {
@@ -50,8 +50,14 @@ final class ImagesListViewController: UIViewController {
                 assertionFailure("Неверный destination для segue")
                 return
             }
-            // Здесь можно будет передавать изображение по url, когда будет реализована загрузка картинок
-            viewController.image = nil
+            // 1. Получаем объект photo для выбранной ячейки
+            let photo = photos[indexPath.row]
+            
+            // 2. Создаем URL из строки largeImageURL этого объекта
+            let imageURL = URL(string: photo.largeImageURL)
+            
+            // 3. Передаем этот URL в новое свойство SingleImageViewController
+            viewController.fullImageURL = imageURL
         } else {
             super.prepare(for: segue, sender: sender)
         }
@@ -91,8 +97,16 @@ extension ImagesListViewController: UITableViewDataSource {
 }
 
 extension ImagesListViewController {
-    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let photo = photos[indexPath.row]
+    private func configureCell(_ cell: ImagesListCell, with photo: Photo) {
+        // Форматируем дату в контроллере, используя существующий dateFormatter
+        let dateText = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
+        
+        // Конфигурируем UI ячейки
+        cell.configure(with: photo, dateText: dateText)
+    }
+    
+    private func loadImage(for cell: ImagesListCell, with photo: Photo) {
+        // Загружаем изображение
         if let url = URL(string: photo.thumbImageURL) {
             cell.cellImage.kf.indicatorType = .activity
             cell.cellImage.kf.setImage(
@@ -109,9 +123,14 @@ extension ImagesListViewController {
         } else {
             cell.cellImage.image = UIImage(named: "Stub")
         }
-        cell.dateLabel.text = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
-        let likeImage = photo.isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
-        cell.likeButton.setImage(likeImage, for: .normal)
+    }
+    
+    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+        let photo = photos[indexPath.row]
+        
+        // Разделяем ответственность: конфигурация UI и загрузка изображения
+        configureCell(cell, with: photo)
+        loadImage(for: cell, with: photo)
     }
 }
 

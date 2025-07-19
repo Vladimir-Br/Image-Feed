@@ -1,4 +1,3 @@
-
 import Foundation
 
 struct PhotoResult: Codable {
@@ -13,7 +12,7 @@ struct PhotoResult: Codable {
     let likedByUser: Bool
     let description: String?
     let urls: UrlsResult
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
@@ -50,12 +49,16 @@ struct Photo {
 final class ImagesListService {
     // MARK: - Notifications
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
-    
+    static let shared = ImagesListService()
+    private init() {}
+
     // MARK: - Properties
     private(set) var photos: [Photo] = []
     private var lastLoadedPage: Int?
-    private var isLoading: Bool = false
-    
+    private var isLoading = false
+    private var fetchPhotosTask: URLSessionTask?
+    private var likeTask: URLSessionTask?
+
     // MARK: - Date Formatter
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -65,83 +68,85 @@ final class ImagesListService {
 
     // MARK: - Networking
     func fetchPhotosNextPage() {
-        // Если уже идёт загрузка — выходим
-        if isLoading { return }
+        guard !isLoading else { return }
         isLoading = true
-        
-        // Определяем номер следующей страницы
+
         let nextPage = (lastLoadedPage ?? 0) + 1
-        
-        // Создаём запрос
+
         guard let request = makeRequest(page: nextPage) else {
             isLoading = false
             return
         }
-        
-        // Выполняем сетевой запрос
-        performRequest(request) { [weak self] result in
+
+        fetchPhotosTask?.cancel()
+        fetchPhotosTask = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let photoResults):
-                    let newPhotos = self.convertToPhotos(photoResults)
+            defer {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
+                }
+            }
+
+            if let error = error {
+                print("[ImagesListService] Ошибка загрузки фотографий: \(error)")
+                return
+            }
+
+            guard let data = data else {
+                print("[ImagesListService] Нет данных в ответе")
+                return
+            }
+
+            do {
+                let photoResults = try JSONDecoder().decode([PhotoResult].self, from: data)
+                let newPhotos = self.convertToPhotos(photoResults)
+                DispatchQueue.main.async {
                     self.photos.append(contentsOf: newPhotos)
                     self.lastLoadedPage = nextPage
-                    
-                case .failure(let error):
-                    print("[ImagesListService] Ошибка загрузки фотографий: \(error)")
                 }
-                
-                self.isLoading = false
-                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
+            } catch {
+                print("[ImagesListService] Ошибка декодирования: \(error)")
             }
         }
+        fetchPhotosTask?.resume()
     }
-    
+
     func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
-        // Получаем токен авторизации
         guard let token = OAuth2TokenStorage.shared.token else {
             completion(.failure(NetworkError.invalidResponse))
             return
         }
 
-        // Формируем URL
         let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
         guard let url = URL(string: urlString) else {
             completion(.failure(NetworkError.invalidURL))
             return
         }
 
-        // Создаём запрос
         var request = URLRequest(url: url)
         request.httpMethod = isLike ? "POST" : "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        // Выполняем запрос
-        URLSession.shared.dataTask(with: request) { _, response, error in
+        likeTask?.cancel()
+        likeTask = URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
             DispatchQueue.main.async {
+                guard let self = self else { return }
+
                 if let error = error {
                     completion(.failure(NetworkError.urlRequestError(error)))
                     return
                 }
 
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(NetworkError.invalidResponse))
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200...299).contains(httpResponse.statusCode) else {
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                    completion(.failure(NetworkError.httpStatusCode(statusCode)))
                     return
                 }
 
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    completion(.failure(NetworkError.httpStatusCode(httpResponse.statusCode)))
-                    return
-                }
-
-                // После успешного запроса обновляем массив photos
-                // Поиск индекса элемента
                 if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
-                    // Текущий элемент
                     let photo = self.photos[index]
-                    // Копия элемента с инвертированным значением isLiked
                     let newPhoto = Photo(
                         id: photo.id,
                         size: photo.size,
@@ -151,13 +156,21 @@ final class ImagesListService {
                         largeImageURL: photo.largeImageURL,
                         isLiked: !photo.isLiked
                     )
-                    // Заменяем элемент в массиве
                     self.photos = self.photos.withReplaced(itemAt: index, newValue: newPhoto)
                 }
-                
+
                 completion(.success(()))
             }
-        }.resume()
+        }
+        likeTask?.resume()
+    }
+
+    func clearImagesList() {
+        photos = []
+        lastLoadedPage = nil
+        isLoading = false
+        fetchPhotosTask?.cancel()
+        fetchPhotosTask = nil
     }
 
     // MARK: - Private Methods
@@ -167,9 +180,9 @@ final class ImagesListService {
             URLQueryItem(name: "page", value: "\(page)"),
             URLQueryItem(name: "per_page", value: "10")
         ]
-        
+
         guard let url = urlComponents.url else { return nil }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         if let token = OAuth2TokenStorage.shared.token {
@@ -177,28 +190,7 @@ final class ImagesListService {
         }
         return request
     }
-    
-    private func performRequest(_ request: URLRequest, completion: @escaping (Result<[PhotoResult], Error>) -> Void) {
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
-                completion(.failure(NetworkError.noData))
-                return
-            }
-        
-            do {
-                let photoResults = try JSONDecoder().decode([PhotoResult].self, from: data)
-                completion(.success(photoResults))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
-    }
-    
+
     private func convertToPhotos(_ photoResults: [PhotoResult]) -> [Photo] {
         return photoResults.map { photoResult in
             Photo(
@@ -222,5 +214,3 @@ extension Array {
         return array
     }
 }
-
-

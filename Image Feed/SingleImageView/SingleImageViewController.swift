@@ -8,14 +8,7 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
         return .lightContent
     }
     
-    var image: UIImage? {
-        didSet {
-            guard isViewLoaded, let image else { return }
-            imageView.image = image
-            imageView.frame.size = image.size
-            rescaleAndCenterImageInScrollView(image: image)
-        }
-    }
+    var fullImageURL: URL?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,10 +16,8 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
         scrollView.maximumZoomScale = 1.25
         scrollView.delegate = self
        
-        guard let image else { return }
-        imageView.image = image
-        imageView.frame.size = image.size
-        rescaleAndCenterImageInScrollView(image: image)
+        // Запускаем процесс загрузки картинки
+            loadImage()
     }
     
     @IBAction private func backButtonTapped(_ sender: UIButton) {
@@ -34,11 +25,50 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
     }
     
     @IBAction private func didTapShareButton(_ sender: UIButton) {
-        guard let image else { return }
+        guard let image = imageView.image else { return }
         let share = UIActivityViewController(activityItems: [image], applicationActivities: nil)
         present(share, animated: true, completion: nil)
     }
     
+    private func loadImage() {
+        // 1. Показываем лоадер
+        UIBlockingProgressHUD.show()
+        
+        // 2. Устанавливаем плейсхолдер и начинаем загрузку
+        imageView.kf.setImage(with: fullImageURL) { [weak self] result in
+            // 3. Скрываем лоадер по завершению
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self = self else { return }
+            switch result {
+            case .success(let imageResult):
+                // 4. При успехе - масштабируем картинку
+                let image = imageResult.image
+                self.imageView.frame.size = image.size // <-- Важно! Устанавливаем размер UIImageView
+                self.rescaleAndCenterImageInScrollView(image: image)
+            case .failure:
+                // 5. При ошибке - показываем алерт
+                self.showError()
+            }
+        }
+    }
+
+    private func showError() {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: "Что-то пошло не так. Попробовать ещё раз?",
+            preferredStyle: .alert
+        )
+        let cancelAction = UIAlertAction(title: "Не надо", style: .cancel)
+        let retryAction = UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in
+            self?.loadImage() // Повторно вызываем загрузку
+        }
+        
+        alert.addAction(cancelAction)
+        alert.addAction(retryAction)
+        
+        self.present(alert, animated: true)
+    }
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
         let minZoomScale = scrollView.minimumZoomScale
         let maxZoomScale = scrollView.maximumZoomScale
