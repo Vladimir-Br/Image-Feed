@@ -17,8 +17,7 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
         scrollView.maximumZoomScale = 1.25
         scrollView.delegate = self
        
-        // Запускаем процесс загрузки картинки
-            loadImage()
+        loadImage()
     }
     
     @IBAction private func backButtonTapped(_ sender: UIButton) {
@@ -32,23 +31,18 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
     }
     
     private func loadImage() {
-        // 1. Показываем лоадер
         UIBlockingProgressHUD.show()
         
-        // 2. Устанавливаем плейсхолдер и начинаем загрузку
         imageView.kf.setImage(with: fullImageURL) { [weak self] result in
-            // 3. Скрываем лоадер по завершению
             UIBlockingProgressHUD.dismiss()
             
             guard let self = self else { return }
             switch result {
             case .success(let imageResult):
-                // 4. При успехе - масштабируем картинку
                 let image = imageResult.image
-                self.imageView.frame.size = image.size // <-- Важно! Устанавливаем размер UIImageView
+                self.imageView.frame.size = image.size
                 self.rescaleAndCenterImageInScrollView(image: image)
             case .failure:
-                // 5. При ошибке - показываем алерт
                 self.showError()
             }
         }
@@ -62,7 +56,7 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
         )
         let cancelAction = UIAlertAction(title: "Не надо", style: .cancel)
         let retryAction = UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in
-            self?.loadImage() // Повторно вызываем загрузку
+            self?.loadImage()
         }
         
         alert.addAction(cancelAction)

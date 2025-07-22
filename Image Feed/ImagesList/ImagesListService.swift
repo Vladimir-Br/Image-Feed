@@ -12,7 +12,7 @@ struct PhotoResult: Codable {
     let likedByUser: Bool
     let description: String?
     let urls: UrlsResult
-
+    
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
@@ -43,156 +43,146 @@ struct Photo {
     let welcomeDescription: String?
     let thumbImageURL: String
     let largeImageURL: String
-    let isLiked: Bool
+    var isLiked: Bool
 }
 
 final class ImagesListService {
-    // MARK: - Notifications
+    
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
     static let shared = ImagesListService()
     private init() {}
-
-    // MARK: - Properties
     private(set) var photos: [Photo] = []
     private var lastLoadedPage: Int?
     private var isLoading = false
     private var fetchPhotosTask: URLSessionTask?
     private var likeTask: URLSessionTask?
-
-    // MARK: - Date Formatter
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
         return formatter
     }()
-
-    // MARK: - Networking
+    
     func fetchPhotosNextPage() {
         guard !isLoading else { return }
         isLoading = true
-
         let nextPage = (lastLoadedPage ?? 0) + 1
-
-        guard let request = makeRequest(page: nextPage) else {
+        guard let request = makePhotosRequest(page: nextPage) else {
             isLoading = false
+            print("[ImagesListService.fetchPhotosNextPage]: [invalidRequest] [page: \(nextPage)]")
             return
         }
-
+        
         fetchPhotosTask?.cancel()
-        fetchPhotosTask = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        
+        fetchPhotosTask = performRequest(request) { [weak self] (result: Result<[PhotoResult], Error>) in
             guard let self = self else { return }
-            defer {
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                defer {
                     self.isLoading = false
-                    NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
+                    self.fetchPhotosTask = nil
                 }
-            }
-
-            if let error = error {
-                print("[ImagesListService] Ошибка загрузки фотографий: \(error)")
-                return
-            }
-
-            guard let data = data else {
-                print("[ImagesListService] Нет данных в ответе")
-                return
-            }
-
-            do {
-                let photoResults = try JSONDecoder().decode([PhotoResult].self, from: data)
-                let newPhotos = self.convertToPhotos(photoResults)
-                DispatchQueue.main.async {
+                
+                switch result {
+                case .success(let photoResults):
+                    let newPhotos = self.convertToPhotos(photoResults)
                     self.photos.append(contentsOf: newPhotos)
                     self.lastLoadedPage = nextPage
+                    NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
+                    
+                case .failure(let error):
+                    print("[ImagesListService.fetchPhotosNextPage]: [\(error)] [page: \(nextPage)]")
                 }
-            } catch {
-                print("[ImagesListService] Ошибка декодирования: \(error)")
             }
         }
+        
         fetchPhotosTask?.resume()
     }
-
+    
     func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let token = OAuth2TokenStorage.shared.token else {
-            completion(.failure(NetworkError.invalidResponse))
-            return
-        }
-
         let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
         guard let url = URL(string: urlString) else {
-            completion(.failure(NetworkError.invalidURL))
+            let error = NetworkError.invalidURL
+            print("[ImagesListService.changeLike]: [\(error)] [photoId: \(photoId), isLike: \(isLike)]")
+            completion(.failure(error))
             return
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = isLike ? "POST" : "DELETE"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
+        
+        guard let request = authorizedRequest(url: url, method: isLike ? "POST" : "DELETE") else {
+            let error = NetworkError.invalidResponse
+            print("[ImagesListService.changeLike]: [\(error)] [photoId: \(photoId), isLike: \(isLike)]")
+            completion(.failure(error))
+            return
+        }
+        
         likeTask?.cancel()
-        likeTask = URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+        
+        likeTask = performRequest(request) { [weak self] (result: Result<Data, Error>) in
             DispatchQueue.main.async {
                 guard let self = self else { return }
-
-                if let error = error {
-                    completion(.failure(NetworkError.urlRequestError(error)))
-                    return
+                defer { self.likeTask = nil }
+                switch result {
+                case .success:
+                    if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
+                        let photo = self.photos[index]
+                        let updatedPhoto = Photo(
+                            id: photo.id,
+                            size: photo.size,
+                            createdAt: photo.createdAt,
+                            welcomeDescription: photo.welcomeDescription,
+                            thumbImageURL: photo.thumbImageURL,
+                            largeImageURL: photo.largeImageURL,
+                            isLiked: !photo.isLiked
+                        )
+                        self.photos = self.photos.withReplaced(itemAt: index, newValue: updatedPhoto)
+                    }
+                    completion(.success(()))
+                    
+                case .failure(let error):
+                    print("[ImagesListService.changeLike]: [\(error)] [photoId: \(photoId), isLike: \(isLike)]")
+                    completion(.failure(error))
                 }
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
-                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                    completion(.failure(NetworkError.httpStatusCode(statusCode)))
-                    return
-                }
-
-                if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
-                    let photo = self.photos[index]
-                    let newPhoto = Photo(
-                        id: photo.id,
-                        size: photo.size,
-                        createdAt: photo.createdAt,
-                        welcomeDescription: photo.welcomeDescription,
-                        thumbImageURL: photo.thumbImageURL,
-                        largeImageURL: photo.largeImageURL,
-                        isLiked: !photo.isLiked
-                    )
-                    self.photos = self.photos.withReplaced(itemAt: index, newValue: newPhoto)
-                }
-
-                completion(.success(()))
             }
         }
+        
         likeTask?.resume()
     }
-
+    
     func clearImagesList() {
         photos = []
         lastLoadedPage = nil
         isLoading = false
         fetchPhotosTask?.cancel()
         fetchPhotosTask = nil
+        likeTask?.cancel()
+        likeTask = nil
     }
-
-    // MARK: - Private Methods
-    private func makeRequest(page: Int) -> URLRequest? {
+    
+    private func authorizedRequest(url: URL, method: String = "GET") -> URLRequest? {
+        guard let token = OAuth2TokenStorage.shared.token else {
+            return nil
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        return request
+    }
+    
+    private func makePhotosRequest(page: Int) -> URLRequest? {
         var urlComponents = URLComponents(string: "https://api.unsplash.com/photos")!
         urlComponents.queryItems = [
             URLQueryItem(name: "page", value: "\(page)"),
             URLQueryItem(name: "per_page", value: "10")
         ]
-
+        
         guard let url = urlComponents.url else { return nil }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        if let token = OAuth2TokenStorage.shared.token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        return request
+        
+        return authorizedRequest(url: url, method: "GET")
     }
-
+    
     private func convertToPhotos(_ photoResults: [PhotoResult]) -> [Photo] {
-        return photoResults.map { photoResult in
+        photoResults.map { photoResult in
             Photo(
                 id: photoResult.id,
                 size: CGSize(width: photoResult.width, height: photoResult.height),
@@ -204,13 +194,50 @@ final class ImagesListService {
             )
         }
     }
+    
+    private func performRequest<T: Decodable>(_ request: URLRequest, completion: @escaping (Result<T, Error>) -> Void) -> URLSessionTask {
+        return URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(NetworkError.urlRequestError(error)))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+                completion(.failure(NetworkError.httpStatusCode(code)))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NetworkError.noData))
+                return
+            }
+            
+            if T.self == Data.self {
+                guard let typedData = data as? T else {
+                    completion(.failure(NetworkError.invalidResponse))
+                    return
+                }
+                completion(.success(typedData))
+                return
+            }
+            
+            do {
+                let decoded = try JSONDecoder().decode(T.self, from: data)
+                completion(.success(decoded))
+            } catch {
+                print("[ImagesListService.performRequest]: [decodingError] [data: \(String(data: data, encoding: .utf8) ?? "invalid encoding")]")
+                completion(.failure(error))
+            }
+        }
+    }
 }
 
-// MARK: - Array Extension
 extension Array {
     func withReplaced(itemAt index: Int, newValue: Element) -> [Element] {
         var array = self
-        array.replaceSubrange(index...index, with: [newValue])
+        array[index] = newValue
         return array
     }
 }

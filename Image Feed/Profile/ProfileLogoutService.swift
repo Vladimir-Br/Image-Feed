@@ -7,20 +7,10 @@ final class ProfileLogoutService {
    private init() { }
 
    func logout() {
-      // 1. Очищаем куки
       cleanCookies()
-      
-      // 2. Очищаем токен из UserDefaults (или Keychain)
-      OAuth2TokenStorage.shared.clearToken() // Предполагаем, что создадим такой метод
-      
-      // 3. Сбрасываем данные сервисов
-      // ProfileService должен "забыть" загруженный профиль
+      OAuth2TokenStorage.shared.clearToken()
       ProfileService.shared.clearProfile()
-      
-      // ProfileImageService должен "забыть" URL аватарки
       ProfileImageService.shared.clearProfileImage()
-      
-      // ImagesListService должен "забыть" ленту фотографий
       ImagesListService.shared.clearImagesList()
    }
 

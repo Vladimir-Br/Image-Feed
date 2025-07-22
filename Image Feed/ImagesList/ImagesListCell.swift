@@ -16,10 +16,7 @@ final class ImagesListCell: UITableViewCell {
     weak var delegate: ImagesListCellDelegate?
     
     func configure(with photo: Photo, dateText: String) {
-        // Настройка даты (используем готовую строку из контроллера)
         dateLabel.text = dateText
-        
-        // Настройка кнопки лайка
         let likeImage = photo.isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")
         likeButton.setImage(likeImage, for: .normal)
     }

@@ -50,13 +50,10 @@ final class ImagesListViewController: UIViewController {
                 assertionFailure("Неверный destination для segue")
                 return
             }
-            // 1. Получаем объект photo для выбранной ячейки
             let photo = photos[indexPath.row]
             
-            // 2. Создаем URL из строки largeImageURL этого объекта
             let imageURL = URL(string: photo.largeImageURL)
             
-            // 3. Передаем этот URL в новое свойство SingleImageViewController
             viewController.fullImageURL = imageURL
         } else {
             super.prepare(for: segue, sender: sender)
@@ -100,13 +97,10 @@ extension ImagesListViewController {
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let photo = photos[indexPath.row]
         
-        // 1. Форматируем дату
         let dateText = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
         
-        // 2. Конфигурируем текстовые поля и лайк
         cell.configure(with: photo, dateText: dateText)
         
-        // 3. Загружаем изображение
         if let url = URL(string: photo.thumbImageURL) {
             cell.cellImage.kf.indicatorType = .activity
             cell.cellImage.kf.setImage(
@@ -151,38 +145,19 @@ extension ImagesListViewController: UITableViewDelegate {
 
 extension ImagesListViewController: ImagesListCellDelegate {
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
-        // 1. Находим indexPath ячейки, по которой кликнули
         guard let indexPath = tableView.indexPath(for: cell) else { return }
-        
-        // 2. Получаем объект Photo для этой ячейки
         let photo = photos[indexPath.row]
-        
-        // 3. Показываем лоадер, чтобы заблокировать UI
         UIBlockingProgressHUD.show()
-        
-        // 4. Вызываем метод сервиса для изменения лайка
         imagesListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
             guard let self = self else { return }
-            
             switch result {
             case .success:
-                // 5. В случае успеха:
-                // Синхронизируем наш массив photos с тем, что в сервисе.
-                // Сервис должен сам обновить состояние лайка у фото внутри себя.
                 self.photos = self.imagesListService.photos
-                
-                // Обновляем вид кнопки в ячейке через новый метод
                 cell.setIsLiked(self.photos[indexPath.row].isLiked)
-                
-                // Убираем лоадер
                 UIBlockingProgressHUD.dismiss()
                 
             case .failure:
-                // 6. В случае ошибки:
-                // Убираем лоадер
                 UIBlockingProgressHUD.dismiss()
-                
-                // TODO: Показать пользователю алерт об ошибке
                 print("[ImagesListViewController] Ошибка изменения лайка")
             }
         }
