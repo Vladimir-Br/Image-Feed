@@ -10,7 +10,7 @@ final class ProfileImageService {
     private var currentTask: URLSessionTask?
     private let urlSession = URLSession.shared
     private let tokenStorage = OAuth2TokenStorage.shared
-   
+    
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
         assert(Thread.isMainThread)
         currentTask?.cancel()
@@ -18,7 +18,7 @@ final class ProfileImageService {
             completion(.failure(ProfileImageServiceError.notAuthorized))
             return
         }
-
+        
         guard let request = makeProfileImageRequest(username: username, token: token) else {
             print("[ProfileImageService]: RequestCreationError - не удалось создать запрос для пользователя \(username)")
             completion(.failure(ProfileImageServiceError.invalidRequest))
@@ -52,6 +52,13 @@ final class ProfileImageService {
         }
         self.currentTask = task
         task.resume()
+    }
+    
+    func clearProfileImage() {
+        avatarURL = nil
+        currentTask?.cancel()
+        currentTask = nil
+        print("[ProfileImageService] Состояние очищено.")
     }
     
     private func makeProfileImageRequest(username: String, token: String) -> URLRequest? {

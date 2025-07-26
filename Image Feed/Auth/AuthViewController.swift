@@ -89,4 +89,4 @@ extension AuthViewController: WebViewViewControllerDelegate {
         vc.dismiss(animated: true)
     }
 }
-    
+

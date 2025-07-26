@@ -1,10 +1,6 @@
 import Foundation
 
-enum NetworkError: Error {
-    case httpStatusCode(Int)
-    case urlRequestError(Error)
-    case urlSessionError
-}
+// enum NetworkError удалён, используем общий из Models/NetworkError.swift
 
 extension URLSession {
     func data(
