@@ -46,7 +46,7 @@ struct Photo {
     var isLiked: Bool
 }
 
-final class ImagesListService {
+final class ImagesListService: ImagesListServiceProtocol {
     
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
     static let shared = ImagesListService()

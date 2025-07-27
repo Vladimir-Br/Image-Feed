@@ -33,8 +33,6 @@
                                                     <rect key="frame" x="16" y="4" width="361" height="244"/>
                                                     <color key="backgroundColor" name="YP Black"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" constant="343" id="Eag-AN-f84"/>
-                                                        <constraint firstAttribute="height" constant="252" id="sbg-oS-EpC"/>
                                                     </constraints>
                                                     <userDefinedRuntimeAttributes>
                                                         <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
