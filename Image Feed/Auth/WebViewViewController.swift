@@ -1,9 +1,9 @@
 import UIKit
 import WebKit
 
-enum WebViewConstants {
-    static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize"
-}
+//enum WebViewConstants {
+//    static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize"
+//}
 
 protocol WebViewViewControllerDelegate: AnyObject {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String)
