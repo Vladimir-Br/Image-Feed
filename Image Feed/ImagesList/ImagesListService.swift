@@ -85,12 +85,18 @@ final class ImagesListService: ImagesListServiceProtocol {
                 switch result {
                 case .success(let photoResults):
                     let newPhotos = self.convertToPhotos(photoResults)
-                    self.photos.append(contentsOf: newPhotos)
+                    
+                    // Дедуплицируем фотографии по ID
+                    let existingIds = Set(self.photos.map { $0.id })
+                    let uniqueNewPhotos = newPhotos.filter { !existingIds.contains($0.id) }
+                    
+                    self.photos.append(contentsOf: uniqueNewPhotos)
                     self.lastLoadedPage = nextPage
                     NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
                     
                 case .failure(let error):
                     print("[ImagesListService.fetchPhotosNextPage]: [\(error)] [page: \(nextPage)]")
+                    // НЕ обновляем lastLoadedPage при ошибке
                 }
             }
         }

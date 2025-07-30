@@ -106,6 +106,8 @@ extension ImagesListViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
+
+
         imageListCell.delegate = self
         let dateText = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
         imageListCell.configure(with: photo, dateText: dateText)
@@ -144,7 +146,12 @@ extension ImagesListViewController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == (presenter?.numberOfPhotos() ?? 0) - 1 {
+        let totalPhotos = presenter?.numberOfPhotos() ?? 0
+        
+        // Запускаем загрузку, когда до конца списка осталось 3 ячейки или меньше.
+        // Это значение можно подобрать для лучшего пользовательского опыта.
+        let remainingRows = totalPhotos - indexPath.row
+        if remainingRows <= 3 && totalPhotos > 0 {
             presenter?.fetchNextPage()
         }
     }

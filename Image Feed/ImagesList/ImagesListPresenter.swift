@@ -61,8 +61,9 @@ final class ImagesListPresenter: ImagesListPresenterProtocol {
         let oldCount = currentPhotosCount
         let newCount = imagesListService.photos.count
         
+        currentPhotosCount = newCount  // ← Обновляем счетчик сразу
+        
         if oldCount != newCount {
-            currentPhotosCount = newCount
             view?.updateTableViewAnimated(oldCount: oldCount, newCount: newCount)
         }
     }
