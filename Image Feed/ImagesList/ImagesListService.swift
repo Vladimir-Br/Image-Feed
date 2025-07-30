@@ -96,7 +96,6 @@ final class ImagesListService: ImagesListServiceProtocol {
                     
                 case .failure(let error):
                     print("[ImagesListService.fetchPhotosNextPage]: [\(error)] [page: \(nextPage)]")
-                    // НЕ обновляем lastLoadedPage при ошибке
                 }
             }
         }

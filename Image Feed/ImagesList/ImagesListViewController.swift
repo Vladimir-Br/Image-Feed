@@ -37,17 +37,12 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
         
         assert(presenter != nil, "Presenter должен быть установлен через configure() перед viewDidLoad")
         
-        view.backgroundColor = UIColor(named: "YP Black")
-        tableView.backgroundColor = UIColor(named: "YP Black")
-        
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
         tableView.dataSource = self
         tableView.delegate = self
         presenter?.viewDidLoad()
     }
     
-
-
     // MARK: - Navigation
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -81,9 +76,13 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
     }
 
     func showErrorAlert(message: String) {
-        let alert = UIAlertController(title: "Ошибка", message: message, preferredStyle: .alert)
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: message,
+            preferredStyle: .alert
+        )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
 
     func performSegueToSingleImage(with indexPath: IndexPath) {
@@ -105,8 +104,6 @@ extension ImagesListViewController: UITableViewDataSource {
               let photo = presenter?.photo(at: indexPath) else {
             return UITableViewCell()
         }
-
-
 
         imageListCell.delegate = self
         let dateText = photo.createdAt.map { dateFormatter.string(from: $0) } ?? ""
@@ -147,9 +144,6 @@ extension ImagesListViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let totalPhotos = presenter?.numberOfPhotos() ?? 0
-        
-        // Запускаем загрузку, когда до конца списка осталось 3 ячейки или меньше.
-        // Это значение можно подобрать для лучшего пользовательского опыта.
         let remainingRows = totalPhotos - indexPath.row
         if remainingRows <= 3 && totalPhotos > 0 {
             presenter?.fetchNextPage()

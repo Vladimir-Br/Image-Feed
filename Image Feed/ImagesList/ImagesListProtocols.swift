@@ -11,7 +11,7 @@ protocol ImagesListViewControllerProtocol: AnyObject {
     /// Устанавливает статус "лайкнуто" для конкретной ячейки
     func setIsLiked(for indexPath: IndexPath, isLiked: Bool)
 
-    /// Показывает ошибку пользователю
+    /// Показывает модальное окно с сообщением об ошибке
     func showErrorAlert(message: String)
 
     /// Переход к экрану просмотра изображения

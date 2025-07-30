@@ -39,7 +39,7 @@ final class ImagesListPresenter: ImagesListPresenterProtocol {
                 let isLiked = self.imagesListService.photos[indexPath.row].isLiked
                 self.view?.setIsLiked(for: indexPath, isLiked: isLiked)
             case .failure:
-                self.view?.showErrorAlert(message: "Не удалось изменить лайк")
+                self.view?.showErrorAlert(message: "Не удалось изменить состояние лайка. Попробуйте ещё раз.")
             }
         }
     }
