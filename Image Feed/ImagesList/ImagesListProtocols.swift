@@ -4,7 +4,7 @@ import UIKit
 
 // MARK: - View Protocol
 
-protocol ImagesListViewControllerProtocol: AnyObject {
+ public protocol ImagesListViewControllerProtocol: AnyObject {
     /// Обновляет таблицу с анимацией вставки новых ячеек
     func updateTableViewAnimated(oldCount: Int, newCount: Int)
 
@@ -44,7 +44,7 @@ protocol ImagesListPresenterProtocol: AnyObject {
 
 // MARK: - Service Protocol
 
-protocol ImagesListServiceProtocol: AnyObject {
+public protocol ImagesListServiceProtocol: AnyObject {
     /// Все загруженные фотографии
     var photos: [Photo] { get }
 
