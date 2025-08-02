@@ -2,7 +2,7 @@ import UIKit
 import Kingfisher
 
 final class ProfileViewController: UIViewController, ProfileViewControllerProtocol {
-    private let profileImageView: UIImageView = {
+    let profileImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "profileImage"))
         imageView.contentMode = .scaleAspectFit
         imageView.layer.cornerRadius = 35
@@ -11,7 +11,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return imageView
     }()
     
-    private let nameLabel: UILabel = {
+    let nameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(named: "YP White")
         label.font = .systemFont(ofSize: 23, weight: .bold)
@@ -19,7 +19,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return label
     }()
     
-    private let usernameLabel: UILabel = {
+    let usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(named: "YP Gray")
         label.font = .systemFont(ofSize: 13)
@@ -27,7 +27,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         return label
     }()
     
-    private let infoLabel: UILabel = {
+    let infoLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(named: "YP White")
         label.font = .systemFont(ofSize: 13)
@@ -153,7 +153,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
     }
 
-    @objc private func didTapLogoutButton(_ sender: Any) {
+    @objc func didTapLogoutButton(_ sender: Any) {
         presenter?.didTapLogoutButton()
     }
 

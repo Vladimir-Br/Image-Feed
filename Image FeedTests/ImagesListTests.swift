@@ -3,7 +3,7 @@ import XCTest
 
 final class ImagesListTests: XCTestCase {
     
-    func testViewDidLoadCallsFetchNextPageAndObservesNotification() {
+    func testViewDidLoadFetchesPhotos() {
         // given
         let service = ImagesListServiceSpy()
         let view = ImagesListViewControllerSpy()
@@ -17,7 +17,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertTrue(service.fetchPhotosNextPageCalled, "fetchPhotosNextPage() должен быть вызван при загрузке")
     }
 
-    func testFetchNextPageCallsService() {
+    func testFetchNextPage() {
         // given
         let service = ImagesListServiceSpy()
         let presenter = ImagesListPresenter(imagesListService: service)
@@ -29,7 +29,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertTrue(service.fetchPhotosNextPageCalled)
     }
 
-    func testDidTapLikeSuccessUpdatesIsLiked() {
+    func testLikeSuccess() {
         // given
         let service = ImagesListServiceSpy()
         let view = ImagesListViewControllerSpy()
@@ -48,7 +48,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertTrue(view.setIsLikedCalled)
     }
 
-    func testDidTapLikeFailureShowsError() {
+    func testLikeFailure() {
         // given
         let service = ImagesListServiceSpy()
         let view = ImagesListViewControllerSpy()
@@ -70,8 +70,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertTrue(view.showErrorAlertCalled)
     }
 
-
-    func testDidSelectRowCallsPerformSegue() {
+    func testSelectRow() {
         // given
         let service = ImagesListServiceSpy()
         let view = ImagesListViewControllerSpy()
@@ -88,7 +87,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertTrue(view.performSegueCalled)
     }
 
-    func testNumberOfPhotosReturnsPhotosCount() {
+    func testPhotosCount() {
         // given
         let service = ImagesListServiceSpy()
         let presenter = ImagesListPresenter(imagesListService: service)
@@ -105,7 +104,7 @@ final class ImagesListTests: XCTestCase {
         XCTAssertEqual(count, 2)
     }
 
-    func testPhotoAtReturnsCorrectPhoto() {
+    func testGetPhoto() {
         // given
         let service = ImagesListServiceSpy()
         let presenter = ImagesListPresenter(imagesListService: service)
