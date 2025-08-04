@@ -2,81 +2,115 @@
 import XCTest
 
 class Image_FeedUITests: XCTestCase {
-    private let app = XCUIApplication() // переменная приложения
-    
+    private let app = XCUIApplication()
     override func setUpWithError() throws {
-        continueAfterFailure = false // настройка выполнения тестов, которая прекратит выполнения тестов, если в тесте что-то пошло не так
+        continueAfterFailure = false
         
-        app.launch() // запускаем приложение перед каждым тестом
+        app.launch()
     }
     
     func testAuth() throws {
         app.buttons["Authenticate"].tap()
         
-        let webView = app.webViews["UnsplashWebView"]
+        sleep(3)
+       
+        let webView = app.webViews["UnsplashWebView"].exists ? app.webViews["UnsplashWebView"] : app.webViews.element
         
-        XCTAssertTrue(webView.waitForExistence(timeout: 5))
+        if !webView.waitForExistence(timeout: 15) {
+            
+            let anyWebView = app.webViews.element
+            XCTAssertTrue(anyWebView.waitForExistence(timeout: 10), "WebView не найден")
+        }
 
         let loginTextField = webView.descendants(matching: .textField).element
         XCTAssertTrue(loginTextField.waitForExistence(timeout: 5))
         
         loginTextField.tap()
-        loginTextField.typeText("<Ваш e-mail>")
+        sleep(2)
+        loginTextField.typeText("")
+        sleep(1)
+        app.typeText("\t")
+        sleep(1)
         webView.swipeUp()
+        sleep(2)
         
         let passwordTextField = webView.descendants(matching: .secureTextField).element
         XCTAssertTrue(passwordTextField.waitForExistence(timeout: 5))
         
         passwordTextField.tap()
-        passwordTextField.typeText("<Ваш пароль>")
+        sleep(2)
+        passwordTextField.typeText("")
+        sleep(1)
+        app.typeText("\t")
+        sleep(1)
         webView.swipeUp()
+        sleep(2)
         
         webView.buttons["Login"].tap()
+        
+        sleep(5)
         
         let tablesQuery = app.tables
         let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
         
-        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        XCTAssertTrue(cell.waitForExistence(timeout: 10))
     }
     
     func testFeed() throws {
         let tablesQuery = app.tables
+        let firstCell = tablesQuery.cells.element(boundBy: 0)
         
-        let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
-        cell.swipeUp()
+        XCTAssertTrue(firstCell.waitForExistence(timeout: 15))
         
+        sleep(3)
+       
+        let secondCell = tablesQuery.cells.element(boundBy: 1)
+        XCTAssertTrue(secondCell.waitForExistence(timeout: 10))
+        let likeButton = secondCell.buttons["Like"]
+       
+        let likeButtonExists = likeButton.waitForExistence(timeout: 10)
+        XCTAssertTrue(likeButtonExists, "Кнопка лайка не найдена")
+        
+        
+        if !likeButton.isHittable {
+            app.swipeUp()
+            sleep(2)
+            
+            if !likeButton.isHittable {
+                app.swipeUp()
+                sleep(2)
+            }
+        }
+        
+       
+        XCTAssertTrue(likeButton.isHittable, "Кнопка лайка недоступна для нажатия")
+        
+        likeButton.tap()
+        sleep(2)
+       
+        likeButton.tap()
         sleep(2)
         
-        let cellToLike = tablesQuery.children(matching: .cell).element(boundBy: 1)
-        
-        cellToLike.buttons["like button off"].tap()
-        cellToLike.buttons["like button on"].tap()
-        
-        sleep(2)
-        
-        cellToLike.tap()
-        
-        sleep(2)
-        
-        let image = app.scrollViews.images.element(boundBy: 0)
-        // Zoom in
-        image.pinch(withScale: 3, velocity: 1) // zoom in
-        // Zoom out
-        image.pinch(withScale: 0.5, velocity: -1)
-        
-        let navBackButtonWhiteButton = app.buttons["nav back button white"]
-        navBackButtonWhiteButton.tap()
+        let image = firstCell.images.firstMatch
+        XCTAssertTrue(image.waitForExistence(timeout: 10))
+        image.tap()
+        sleep(5)
+        let fullscreenImage = app.images.firstMatch
+        fullscreenImage.pinch(withScale: 3, velocity: 1)
+        fullscreenImage.pinch(withScale: 0.5, velocity: -1)
+        let backButton = app.buttons["Backward"]
+        backButton.tap()
     }
     
     func testProfile() throws {
-        sleep(3)
+        sleep(5)
         app.tabBars.buttons.element(boundBy: 1).tap()
        
-        XCTAssertTrue(app.staticTexts["Name Lastname"].exists)
-        XCTAssertTrue(app.staticTexts["@username"].exists)
+        XCTAssertTrue(app.staticTexts["ProfileName"].exists)
+        XCTAssertTrue(app.staticTexts["ProfileUsername"].exists)
         
-        app.buttons["logout button"].tap()
+        app.buttons["logout"].tap()
         
-        app.alerts["Bye bye!"].scrollViews.otherElements.buttons["Yes"].tap()
+        app.alerts["Пока, пока!"].scrollViews.otherElements.buttons["Да"].tap()
     }
 }

@@ -15,6 +15,10 @@ final class ImagesListCell: UITableViewCell {
     
     weak var delegate: ImagesListCellDelegate?
     
+    override func awakeFromNib() {
+        super.awakeFromNib()
+    }
+    
     func configure(with photo: Photo, dateText: String) {
         dateLabel.text = dateText
         let likeImage = photo.isLiked ? UIImage(named: "button_like_yes") : UIImage(named: "button_like_no")

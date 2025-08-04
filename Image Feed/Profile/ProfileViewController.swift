@@ -150,7 +150,11 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
     }
     
     private func setupActions() {
+        logoutButton.accessibilityIdentifier = "logout"
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
+        
+        nameLabel.accessibilityIdentifier = "ProfileName"
+        usernameLabel.accessibilityIdentifier = "ProfileUsername"
     }
 
     @objc func didTapLogoutButton(_ sender: Any) {

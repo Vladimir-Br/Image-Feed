@@ -23,89 +23,53 @@ final class ImagesListTests: XCTestCase {
     }
     
     func testViewDidLoad() {
-        // given
+        
         let newPresenterSpy = ImagesListPresenterSpy()
         let newViewController = storyboard.instantiateViewController(withIdentifier: "ImagesListViewController") as! ImagesListViewController
         newViewController.configure(newPresenterSpy)
-        
-        // when
-        newViewController.loadViewIfNeeded() // Это вызовет viewDidLoad
-        
-        // then
-        XCTAssertTrue(newPresenterSpy.viewDidLoadCalled, "viewDidLoad() должен вызвать presenter.viewDidLoad()")
+        newViewController.loadViewIfNeeded()
+        XCTAssertTrue(newPresenterSpy.viewDidLoadCalled, "viewDidLoad не вызван")
     }
     
     func testUpdateTableView() {
-        // given
         viewController.loadViewIfNeeded()
-        
-        // when
-        // Тестируем сценарий, когда количество не изменилось (безопасный случай)
         viewController.updateTableViewAnimated(oldCount: 0, newCount: 0)
-        
-        // then
-        // Проверяем, что метод выполняется без ошибок
-        XCTAssertNotNil(viewController, "View controller должен остаться валидным после обновления таблицы")
+        XCTAssertNotNil(viewController, "ViewController nil после обновления")
     }
     
     func testSetLiked() {
-        // given
         viewController.loadViewIfNeeded()
         let indexPath = IndexPath(row: 0, section: 0)
-        
-        // when
         viewController.setIsLiked(for: indexPath, isLiked: true)
-        
-        // then
-        // Проверяем, что метод выполняется без ошибок
-        XCTAssertNotNil(viewController, "View controller должен остаться валидным после установки лайка")
+        XCTAssertNotNil(viewController, "ViewController nil после лайка")
     }
     
     func testShowError() {
-        // given
         viewController.loadViewIfNeeded()
         let errorMessage = "Test error message"
-        
-        // when
         viewController.showErrorAlert(message: errorMessage)
-        
-        // then
-        // Unit-тест: проверяем, что метод выполняется без краша
-        XCTAssertNotNil(viewController, "View controller должен остаться валидным после показа ошибки")
+        XCTAssertNotNil(viewController, "ViewController nil после ошибки")
     }
     
     func testViewControllerSetup() {
-        // given
         viewController.loadViewIfNeeded()
-        
-        // when/then
-        // Проверяем базовую настройку view controller
-        XCTAssertNotNil(viewController, "View controller должен существовать")
-        XCTAssertEqual(viewController.preferredStatusBarStyle, .lightContent, "Status bar должен быть светлым")
-        XCTAssertNotNil(viewController.view, "View должен быть создан")
+        XCTAssertNotNil(viewController, "ViewController не существует")
+        XCTAssertEqual(viewController.preferredStatusBarStyle, .lightContent, "Status bar не светлый")
+        XCTAssertNotNil(viewController.view, "View не создан")
     }
     
     func testProtocolMethods() {
-        // given
         viewController.loadViewIfNeeded()
-        
-        // then
-        // Проверяем, что view controller не nil и реализует протоколы
-        XCTAssertNotNil(viewController, "ViewController не должен быть nil")
-        XCTAssertTrue(viewController.conforms(to: UITableViewDataSource.self), "ViewController должен соответствовать UITableViewDataSource")
-        XCTAssertTrue(viewController.conforms(to: UITableViewDelegate.self), "ViewController должен соответствовать UITableViewDelegate")
+        XCTAssertNotNil(viewController, "ViewController nil")
+        XCTAssertTrue(viewController.conforms(to: UITableViewDataSource.self), "Не соответствует UITableViewDataSource")
+        XCTAssertTrue(viewController.conforms(to: UITableViewDelegate.self), "Не соответствует UITableViewDelegate")
     }
     
     func testConfigurePresenter() {
-        // given
+        
         let newPresenterSpy = ImagesListPresenterSpy()
         let newViewController = storyboard.instantiateViewController(withIdentifier: "ImagesListViewController") as! ImagesListViewController
-        
-        // when
         newViewController.configure(newPresenterSpy)
-        
-        // then
-        // Проверяем, что presenter установлен правильно
-        XCTAssertTrue(newPresenterSpy.view === newViewController, "Presenter должен иметь ссылку на view controller")
+        XCTAssertTrue(newPresenterSpy.view === newViewController, "Presenter не ссылается на view")
     }
 }

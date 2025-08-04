@@ -16,6 +16,11 @@ final class SingleImageViewController: UIViewController, UIScrollViewDelegate {
         scrollView.minimumZoomScale = 0.1
         scrollView.maximumZoomScale = 1.25
         scrollView.delegate = self
+        
+        // Находим кнопку "Назад" и устанавливаем accessibilityIdentifier
+        if let backButton = view.subviews.compactMap({ $0 as? UIButton }).first(where: { $0.currentImage == UIImage(named: "Backward") }) {
+            backButton.accessibilityIdentifier = "BackButton"
+        }
        
         loadImage()
     }

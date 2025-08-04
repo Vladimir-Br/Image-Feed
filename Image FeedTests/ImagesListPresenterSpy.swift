@@ -2,10 +2,9 @@
 import Foundation
 
 final class ImagesListPresenterSpy: ImagesListPresenterProtocol {
-    // MARK: - Properties
+   
     weak var view: ImagesListViewControllerProtocol?
     
-    // MARK: - Call tracking
     private(set) var viewDidLoadCalled = false
     private(set) var fetchNextPageCalled = false
     private(set) var didTapLikeCalled = false
@@ -13,14 +12,11 @@ final class ImagesListPresenterSpy: ImagesListPresenterProtocol {
     private(set) var numberOfPhotosCalled = false
     private(set) var photoCalled = false
     
-    // MARK: - Parameters tracking
     private(set) var receivedIndexPath: IndexPath?
     
-    // MARK: - Return values for testing
     var numberOfPhotosReturnValue = 0
     var photoReturnValue: Photo?
     
-    // MARK: - Protocol methods
     func viewDidLoad() {
         viewDidLoadCalled = true
     }
