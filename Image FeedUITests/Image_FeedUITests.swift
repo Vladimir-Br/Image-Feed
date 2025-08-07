@@ -6,6 +6,8 @@ class Image_FeedUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         
+        // Добавляем аргумент для ограничения загрузки страниц в UI-тестах
+        app.launchArguments = ["UITEST"]
         app.launch()
     }
     

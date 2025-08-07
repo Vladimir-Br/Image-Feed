@@ -11,17 +11,17 @@ public protocol WebViewPresenterProtocol {
 final class WebViewPresenter: WebViewPresenterProtocol {
     weak var view: WebViewViewControllerProtocol?
     var authHelper: AuthHelperProtocol
-        
-        init(authHelper: AuthHelperProtocol) {
-            self.authHelper = authHelper
-        }
+    
+    init(authHelper: AuthHelperProtocol) {
+        self.authHelper = authHelper
+    }
     
     func viewDidLoad() {
-           guard let request = authHelper.authRequest() else { return }
-           
-           view?.load(request: request)
-           didUpdateProgressValue(0)
-       }
+        guard let request = authHelper.authRequest() else { return }
+        
+        view?.load(request: request)
+        didUpdateProgressValue(0)
+    }
     
     func didUpdateProgressValue(_ newValue: Double) {
         let newProgressValue = Float(newValue)
@@ -36,6 +36,6 @@ final class WebViewPresenter: WebViewPresenterProtocol {
     }
     
     func code(from url: URL) -> String? {
-            authHelper.code(from: url)
-        }
+        authHelper.code(from: url)
+    }
 }

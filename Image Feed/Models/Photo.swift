@@ -1,6 +1,5 @@
 
 import Foundation
-import UIKit
 
 public struct Photo {
     let id: String

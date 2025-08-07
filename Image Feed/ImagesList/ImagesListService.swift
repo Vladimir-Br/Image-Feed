@@ -18,6 +18,14 @@ final class ImagesListService: ImagesListServiceProtocol {
     
     func fetchPhotosNextPage() {
         guard !isLoading else { return }
+        
+        // Ограничение загрузки для UI-тестов
+        // При запуске из UI-тестов загружаем только первые 2 страницы
+        if ProcessInfo.processInfo.arguments.contains("UITEST"),
+           (lastLoadedPage ?? 0) >= 2 {
+            return
+        }
+        
         isLoading = true
         let nextPage = (lastLoadedPage ?? 0) + 1
         guard let request = makePhotosRequest(page: nextPage) else {
