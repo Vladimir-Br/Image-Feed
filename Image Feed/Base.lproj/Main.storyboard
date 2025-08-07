@@ -33,8 +33,6 @@
                                                     <rect key="frame" x="16" y="4" width="361" height="244"/>
                                                     <color key="backgroundColor" name="YP Black"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" constant="343" id="Eag-AN-f84"/>
-                                                        <constraint firstAttribute="height" constant="252" id="sbg-oS-EpC"/>
                                                     </constraints>
                                                     <userDefinedRuntimeAttributes>
                                                         <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
@@ -51,6 +49,7 @@
                                                 </label>
                                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="naa-VZ-5US" userLabel="Like Button">
                                                     <rect key="frame" x="333" y="4" width="44" height="44"/>
+                                                    <accessibility key="accessibilityConfiguration" label="Like"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="44" id="XvO-aN-jYr"/>
                                                         <constraint firstAttribute="height" constant="44" id="YiU-qR-KFK"/>
@@ -64,8 +63,6 @@
                                             </subviews>
                                             <constraints>
                                                 <constraint firstAttribute="trailing" secondItem="LrK-z9-ssn" secondAttribute="trailing" constant="16" id="4R2-3g-jEj"/>
-                                                <constraint firstItem="LrK-z9-ssn" firstAttribute="trailing" secondItem="naa-VZ-5US" secondAttribute="trailing" id="7O3-Hn-9OO"/>
-                                                <constraint firstItem="naa-VZ-5US" firstAttribute="top" secondItem="LrK-z9-ssn" secondAttribute="top" id="FCw-G8-pze"/>
                                                 <constraint firstItem="LrK-z9-ssn" firstAttribute="top" secondItem="HGJ-05-mOC" secondAttribute="top" constant="4" id="Grj-N7-5c4"/>
                                                 <constraint firstItem="LrK-z9-ssn" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="UDv-qy-aUP" secondAttribute="trailing" constant="8" id="ZOZ-45-Vet"/>
                                                 <constraint firstAttribute="bottom" secondItem="LrK-z9-ssn" secondAttribute="bottom" constant="4" id="ftB-P0-X57"/>
@@ -73,6 +70,10 @@
                                                 <constraint firstItem="LrK-z9-ssn" firstAttribute="bottom" secondItem="UDv-qy-aUP" secondAttribute="bottom" constant="8" id="ldL-yN-cur"/>
                                                 <constraint firstItem="UDv-qy-aUP" firstAttribute="leading" secondItem="LrK-z9-ssn" secondAttribute="leading" constant="8" id="xrl-Kl-zMj"/>
                                                 <constraint firstItem="LrK-z9-ssn" firstAttribute="leading" secondItem="HGJ-05-mOC" secondAttribute="leading" constant="16" id="zIF-Nb-N1i"/>
+                                                
+                                                <!-- Constraints для кнопки лайка - привязываем к верху и правому краю ячейки -->
+                                                <constraint firstItem="naa-VZ-5US" firstAttribute="top" secondItem="HGJ-05-mOC" secondAttribute="top" constant="4" id="FCw-G8-pze"/>
+                                                <constraint firstAttribute="trailing" secondItem="naa-VZ-5US" secondAttribute="trailing" constant="16" id="7O3-Hn-9OO"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" name="YP Black"/>
@@ -206,6 +207,7 @@
                                     <color key="titleColor" name="YP Black"/>
                                 </state>
                                 <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="Authenticate"/>
                                     <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
                                         <integer key="value" value="16"/>
                                     </userDefinedRuntimeAttribute>
@@ -236,7 +238,7 @@
         <!--Web View View Controller-->
         <scene sceneID="IPI-Ys-g4g">
             <objects>
-                <viewController id="o11-qK-mgh" customClass="WebViewViewController" customModule="Image_Feed" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="WebViewViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="o11-qK-mgh" customClass="WebViewViewController" customModule="Image_Feed" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="iwf-cw-Qc7">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

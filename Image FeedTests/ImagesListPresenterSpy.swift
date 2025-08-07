@@ -1,0 +1,48 @@
+@testable import Image_Feed
+import Foundation
+
+final class ImagesListPresenterSpy: ImagesListPresenterProtocol {
+   
+    weak var view: ImagesListViewControllerProtocol?
+    
+    private(set) var viewDidLoadCalled = false
+    private(set) var fetchNextPageCalled = false
+    private(set) var didTapLikeCalled = false
+    private(set) var didSelectRowCalled = false
+    private(set) var numberOfPhotosCalled = false
+    private(set) var photoCalled = false
+    
+    private(set) var receivedIndexPath: IndexPath?
+    
+    var numberOfPhotosReturnValue = 0
+    var photoReturnValue: Photo?
+    
+    func viewDidLoad() {
+        viewDidLoadCalled = true
+    }
+    
+    func fetchNextPage() {
+        fetchNextPageCalled = true
+    }
+    
+    func didTapLike(at indexPath: IndexPath) {
+        didTapLikeCalled = true
+        receivedIndexPath = indexPath
+    }
+    
+    func didSelectRow(at indexPath: IndexPath) {
+        didSelectRowCalled = true
+        receivedIndexPath = indexPath
+    }
+    
+    func numberOfPhotos() -> Int {
+        numberOfPhotosCalled = true
+        return numberOfPhotosReturnValue
+    }
+    
+    func photo(at indexPath: IndexPath) -> Photo? {
+        photoCalled = true
+        receivedIndexPath = indexPath
+        return photoReturnValue
+    }
+}

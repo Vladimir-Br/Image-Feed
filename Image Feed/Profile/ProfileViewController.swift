@@ -1,8 +1,8 @@
 import UIKit
 import Kingfisher
 
-final class ProfileViewController: UIViewController {
-    private let profileImageView: UIImageView = {
+final class ProfileViewController: UIViewController, ProfileViewControllerProtocol {
+    let profileImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "profileImage"))
         imageView.contentMode = .scaleAspectFit
         imageView.layer.cornerRadius = 35
@@ -11,27 +11,24 @@ final class ProfileViewController: UIViewController {
         return imageView
     }()
     
-    private let nameLabel: UILabel = {
+    let nameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Екатерина Новикова"
         label.textColor = UIColor(named: "YP White")
         label.font = .systemFont(ofSize: 23, weight: .bold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let usernameLabel: UILabel = {
+    let usernameLabel: UILabel = {
         let label = UILabel()
-        label.text = "@ekaterina_nov"
         label.textColor = UIColor(named: "YP Gray")
         label.font = .systemFont(ofSize: 13)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let infoLabel: UILabel = {
+    let infoLabel: UILabel = {
         let label = UILabel()
-        label.text = "Hello, World!"
         label.textColor = UIColor(named: "YP White")
         label.font = .systemFont(ofSize: 13)
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -45,62 +42,75 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
-    private var profileImageServiceObserver: NSObjectProtocol?
-    
+    private var presenter: ProfilePresenterProtocol?
+
+    func configure(presenter: ProfilePresenterProtocol) {
+        self.presenter = presenter
+        presenter.view = self
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBackground()
         setupUI()
         setupConstraints()
         setupActions()
-        
-        if let profile = ProfileService.shared.profile {
-            updateProfileDetails(profile: profile)
-        } else {
-            print("[ProfileViewController] Профиль еще не загружен")
-        }
-        
-        profileImageServiceObserver = NotificationCenter.default
-            .addObserver(
-                forName: ProfileImageService.didChangeNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                guard let self = self else { return }
-                self.updateAvatar()
-            }
-        
-        updateAvatar()
+        presenter?.viewDidLoad()
     }
-    
-    deinit {
-        print("[ProfileViewController] Деинициализация")
+
+    func updateProfileDetails(name: String, loginName: String, bio: String?) {
+        nameLabel.text = name
+        usernameLabel.text = loginName
+        infoLabel.text = bio ?? ""
     }
-    
-    private func updateAvatar() {
-        guard
-            let profileImageURL = ProfileImageService.shared.avatarURL,
-            let url = URL(string: profileImageURL)
-        else {
-            print("[ProfileViewController] Не удалось получить URL аватара")
-            return
-        }
-        
+
+    func updateAvatar(with url: URL?) {
         profileImageView.kf.setImage(
             with: url,
             placeholder: UIImage(named: "placeholder"),
-            options: [
-                .cacheOriginalImage
-            ]) { result in
-                switch result {
-                case .success(let value):
-                    print("[ProfileViewController] Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
-                case .failure(let error):
-                    print("[ProfileViewController] Ошибка загрузки аватара: \(error.localizedDescription)")
-                }
+            options: [.cacheOriginalImage, .transition(.fade(0.3))]
+        ) { result in
+            switch result {
+            case .success(let value):
+                print("[ProfileViewController] Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
+            case .failure(let error):
+                print("[ProfileViewController] Ошибка загрузки аватара: \(error.localizedDescription)")
             }
+        }
     }
-    
+
+    func showLogoutAlert() {
+        let alert = UIAlertController(
+            title: "Пока, пока!",
+            message: "Уверены, что хотите выйти?",
+            preferredStyle: .alert
+        )
+        
+        let confirmAction = UIAlertAction(title: "Да", style: .destructive) { [weak self] _ in
+            self?.presenter?.performLogout()
+        }
+        
+        let cancelAction = UIAlertAction(title: "Нет", style: .default)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true, completion: nil)
+    }
+
+    func switchToSplashViewController() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            print("[ProfileViewController] Не удалось получить главное окно")
+            return
+        }
+
+        let splashViewController = SplashViewController()
+        UIView.transition(with: window, duration: 0.3, options: .transitionFlipFromLeft) {
+            window.rootViewController = splashViewController
+        }
+    }
+
     private func setupBackground() {
         view.backgroundColor = UIColor(named: "YP Black")
     }
@@ -140,51 +150,18 @@ final class ProfileViewController: UIViewController {
     }
     
     private func setupActions() {
+        logoutButton.accessibilityIdentifier = "logout"
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
+        
+        nameLabel.accessibilityIdentifier = "ProfileName"
+        usernameLabel.accessibilityIdentifier = "ProfileUsername"
     }
-    
-    private func updateProfileDetails(profile: Profile) {
-        nameLabel.text = profile.name
-        usernameLabel.text = profile.loginName
-        infoLabel.text = profile.bio ?? ""
-    }
-    
-    private func showLogoutAlert() {
-        let alert = UIAlertController(
-            title: "Пока, пока!",
-            message: "Уверены, что хотите выйти?",
-            preferredStyle: .alert
-        )
-        
-        let confirmAction = UIAlertAction(title: "Да", style: .destructive) { [weak self] _ in
-            self?.performLogout()
-        }
-        
-        let cancelAction = UIAlertAction(title: "Нет", style: .default)
-        
-        alert.addAction(confirmAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true, completion: nil)
-    }
-    
-    @objc private func didTapLogoutButton(_ sender: Any) {
-        showLogoutAlert()
-    }
-    
-    private func performLogout() {
-        ProfileLogoutService.shared.logout()
-        
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
-            print("[ProfileViewController] Не удалось получить главное окно")
-            return
-        }
 
-        let splashViewController = SplashViewController()
+    @objc func didTapLogoutButton(_ sender: Any) {
+        presenter?.didTapLogoutButton()
+    }
 
-        UIView.transition(with: window, duration: 0.3, options: .transitionFlipFromLeft) {
-            window.rootViewController = splashViewController
-        }
+    deinit {
+        print("[ProfileViewController] Деинициализация")
     }
 }
